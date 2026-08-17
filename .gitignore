@@ -18,3 +18,5 @@ yarn-error.log*
 dist/
 build/
 .DS_Store
+.specific/
+pulse-app/
