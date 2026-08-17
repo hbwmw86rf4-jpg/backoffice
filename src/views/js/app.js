@@ -299,22 +299,48 @@ function setupEventListeners() {
   initBulkUpdates();
 
   // Groups
-  document.getElementById('createGroupBtn').addEventListener('click', () => openGroupModal());
-  document.getElementById('groupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await saveGroup();
-  });
-  document.getElementById('refreshGroupItemsBtn').addEventListener('click', async () => {
-    if (currentGroupId) {
-      await ipcRenderer.invoke('populate-group-from-condition', currentGroupId);
-      viewGroupItems(currentGroupId, document.getElementById('groupItemsTitle').textContent.replace('Items in: ', ''));
-    }
-  });
-  document.getElementById('batchUpdateBtn').addEventListener('click', batchUpdatePrices);
-  document.getElementById('autoAssignBrandsBtn').addEventListener('click', async () => {
-    const result = await ipcRenderer.invoke('auto-assign-brands');
-    alert(`Assigned ${result.assigned} items to brands`);
-  });
+  const groupCatFilter = document.getElementById('groupCategoryFilter');
+  if (groupCatFilter) {
+    groupCatFilter.addEventListener('change', () => loadGroups());
+  }
+
+  const groupSearchInp = document.getElementById('groupSearchInput');
+  if (groupSearchInp) {
+    groupSearchInp.addEventListener('input', () => filterGroupsTable());
+  }
+
+  const seedBtn = document.getElementById('seedRetailGroupsBtn');
+  if (seedBtn) {
+    seedBtn.addEventListener('click', seedRetailGroupsAction);
+  }
+
+  const createGrpBtn = document.getElementById('createGroupBtn');
+  if (createGrpBtn) {
+    createGrpBtn.addEventListener('click', () => openGroupModal());
+  }
+
+  const grpForm = document.getElementById('groupForm');
+  if (grpForm) {
+    grpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveGroup();
+    });
+  }
+
+  const refreshGrpBtn = document.getElementById('refreshGroupItemsBtn');
+  if (refreshGrpBtn) {
+    refreshGrpBtn.addEventListener('click', async () => {
+      if (currentGroupId) {
+        await ipcRenderer.invoke('populate-group-from-condition', currentGroupId);
+        viewGroupItems(currentGroupId, currentGroupName);
+      }
+    });
+  }
+
+  const batchBtn = document.getElementById('batchUpdateBtn');
+  if (batchBtn) {
+    batchBtn.addEventListener('click', executeBatchPriceUpdate);
+  }
 
   // Tank Gauge
   document.getElementById('addTankReadingBtn').addEventListener('click', openTankReadingModal);
@@ -357,6 +383,7 @@ function setupEventListeners() {
 function loadViewData(view) {
   switch (view) {
     case 'dashboard': loadDashboard(); break;
+    case 'groups': loadGroups(); break;
     case 'fuel': loadFuelReport(); break;
     case 'cstore': loadCstoreReport(); break;
     case 'payments': loadPaymentReport(); break;
@@ -2482,3 +2509,275 @@ function initItemPickers() {
 }
 
 setTimeout(initItemPickers, 100);
+
+// ==========================================
+// ITEM GROUPS & PRICE MANAGEMENT
+// ==========================================
+
+let currentGroupId = null;
+let currentGroupName = '';
+let allLoadedGroups = [];
+
+async function loadGroups() {
+  const category = document.getElementById('groupCategoryFilter')?.value || 'All';
+  try {
+    allLoadedGroups = await ipcRenderer.invoke('get-groups', category);
+  } catch (e) {
+    console.error('Error fetching groups:', e);
+    allLoadedGroups = [];
+  }
+
+  // Update stats
+  const totalGroupsEl = document.getElementById('totalGroups');
+  if (totalGroupsEl) totalGroupsEl.textContent = allLoadedGroups.length;
+
+  const totalItems = allLoadedGroups.reduce((acc, g) => acc + (g.item_count || 0), 0);
+  const totalGroupedItemsEl = document.getElementById('totalGroupedItems');
+  if (totalGroupedItemsEl) totalGroupedItemsEl.textContent = totalItems;
+
+  renderGroupsTable(allLoadedGroups);
+}
+
+function getCategoryBadge(cat) {
+  const c = cat || 'General';
+  let bg = '#e2e8f0';
+  let color = '#334155';
+  if (c === 'Cigarettes') { bg = '#fee2e2'; color = '#991b1b'; }
+  else if (c === 'Tobacco & Smokeless') { bg = '#fef3c7'; color = '#92400e'; }
+  else if (c === 'Beverages') { bg = '#dbeafe'; color = '#1e40af'; }
+  else if (c === 'Energy Drinks') { bg = '#f3e8ff'; color = '#6b21a8'; }
+  else if (c === 'Snacks') { bg = '#ffedd5'; color = '#9a3412'; }
+  else if (c === 'Beer & Malt') { bg = '#ecfdf5'; color = '#065f46'; }
+
+  return `<span style="display:inline-block; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600; background:${bg}; color:${color};">${escapeHtml(c)}</span>`;
+}
+
+function filterGroupsTable() {
+  const q = (document.getElementById('groupSearchInput')?.value || '').toLowerCase().trim();
+  if (!q) {
+    renderGroupsTable(allLoadedGroups);
+    return;
+  }
+  const filtered = allLoadedGroups.filter(g => 
+    (g.name || '').toLowerCase().includes(q) || 
+    (g.description || '').toLowerCase().includes(q) ||
+    (g.category || '').toLowerCase().includes(q)
+  );
+  renderGroupsTable(filtered);
+}
+
+function renderGroupsTable(groupsList) {
+  const tbody = document.querySelector('#groupsTable tbody');
+  if (!tbody) return;
+
+  if (!groupsList || groupsList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#64748b;">No groups found for the selected category. Click "⚡ Seed / Refresh Groups" to load all standard manufacturer price groups.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = groupsList.map(g => `
+    <tr style="cursor:pointer;" onclick="viewGroupItems(${g.id}, '${escapeHtml(g.name).replace(/'/g, "\\'")}')" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <td>${getCategoryBadge(g.category)}</td>
+      <td style="font-weight:600; color:#1e293b;">${escapeHtml(g.name)}</td>
+      <td style="font-size:12px; color:#64748b;">${escapeHtml(g.description || '-')}</td>
+      <td style="text-align:center;"><span style="display:inline-block; min-width:28px; padding:2px 8px; border-radius:10px; background:#e0e7ff; color:#3730a3; font-weight:700; font-size:12px;">${g.item_count || 0}</span></td>
+      <td style="font-size:12px; color:#475569;">${g.price_adjustment_type || 'percentage'}: ${g.price_adjustment_value || 0}</td>
+      <td style="text-align:right;" onclick="event.stopPropagation();">
+        <button class="btn btn-sm btn-primary" onclick="viewGroupItems(${g.id}, '${escapeHtml(g.name).replace(/'/g, "\\'")}')">View Items</button>
+        <button class="btn btn-sm" style="background:#fee2e2; color:#ef4444; margin-left:4px;" onclick="deleteGroupAction(${g.id}, '${escapeHtml(g.name).replace(/'/g, "\\'")}')">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function viewGroupItems(groupId, groupName) {
+  currentGroupId = groupId;
+  currentGroupName = groupName;
+
+  const container = document.getElementById('groupItemsContainer');
+  const title = document.getElementById('groupItemsTitle');
+  const tbody = document.querySelector('#groupItemsTable tbody');
+
+  if (container) container.style.display = 'block';
+  if (title) title.textContent = `Items in: ${groupName}`;
+
+  if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Loading group items...</td></tr>';
+
+  try {
+    const items = await ipcRenderer.invoke('get-group-items', groupId);
+    if (title) title.textContent = `Items in: ${groupName} (${items.length} items)`;
+
+    if (!items || items.length === 0) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">No items currently in this group. Click "Refresh Matching" or add items.</td></tr>';
+      return;
+    }
+
+    if (tbody) {
+      tbody.innerHTML = items.map(item => {
+        const price = parseFloat(item.price) || 0;
+        const cost = parseFloat(item.cost) || 0;
+        const margin = price > 0 ? (((price - cost) / price) * 100).toFixed(1) : '0.0';
+        return `
+          <tr>
+            <td style="font-family:monospace; font-weight:600; color:#334155;">${escapeHtml(item.upc || '-')}</td>
+            <td style="font-weight:600;">${escapeHtml(item.name || '-')}</td>
+            <td style="color:#64748b; font-size:12px;">${escapeHtml(item.department || '-')}</td>
+            <td style="text-align:right; font-weight:700; color:#0f172a;">${formatCurrency(price)}</td>
+            <td style="text-align:right; color:#64748b;">${formatCurrency(cost)}</td>
+            <td style="text-align:right; font-weight:600; color:${parseFloat(margin) < 15 ? '#ef4444' : '#16a34a'};">${margin}%</td>
+            <td style="text-align:center;">
+              <button class="btn btn-sm" style="background:#fee2e2; color:#ef4444; padding:2px 6px;" title="Remove from group" onclick="removeGroupItemAction(${groupId}, ${item.id})">✕</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    container?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#ef4444;">Error loading items: ${escapeHtml(e.message)}</td></tr>`;
+  }
+}
+
+function closeGroupItems() {
+  const container = document.getElementById('groupItemsContainer');
+  if (container) container.style.display = 'none';
+  currentGroupId = null;
+  currentGroupName = '';
+}
+
+async function executeBatchPriceUpdate() {
+  if (!currentGroupId) {
+    alert('Please select a group first.');
+    return;
+  }
+
+  const type = document.getElementById('batchAdjustType')?.value || 'set_price';
+  const valInput = document.getElementById('batchAdjustValue');
+  const val = parseFloat(valInput?.value);
+
+  if (isNaN(val)) {
+    alert('Please enter a valid numeric value for the price adjustment.');
+    valInput?.focus();
+    return;
+  }
+
+  let promptDesc = '';
+  if (type === 'set_price') promptDesc = `Set the exact price of ALL items in "${currentGroupName}" to $${val.toFixed(2)}`;
+  else if (type === 'fixed_amount') promptDesc = `Adjust the price of ALL items in "${currentGroupName}" by ${val >= 0 ? '+' : ''}$${val.toFixed(2)}`;
+  else if (type === 'percentage') promptDesc = `Adjust the price of ALL items in "${currentGroupName}" by ${val >= 0 ? '+' : ''}${val}%`;
+  else if (type === 'markup_cost') promptDesc = `Set the price of ALL items in "${currentGroupName}" to Cost + ${val}% markup`;
+
+  if (!confirm(`Are you sure you want to:\n\n${promptDesc}?\n\nThis will update all items in the group immediately.`)) {
+    return;
+  }
+
+  try {
+    const res = await ipcRenderer.invoke('batch-update-prices', currentGroupId, type, val);
+    alert(`🎉 Successfully updated prices for ${res.updated} item(s) in "${currentGroupName}"!`);
+    if (valInput) valInput.value = '';
+    viewGroupItems(currentGroupId, currentGroupName);
+    loadGroups();
+  } catch (e) {
+    alert(`Error updating prices: ${e.message}`);
+  }
+}
+
+async function seedRetailGroupsAction() {
+  if (!confirm('Re-seed and refresh all standard manufacturer retail price groups (Philip Morris, RJ Reynolds, ITG, PepsiCo, Coke, Red Bull, etc.)?')) {
+    return;
+  }
+  try {
+    const res = await ipcRenderer.invoke('seed-retail-groups');
+    alert(`🎉 Created/Refreshed ${res.groupsCreated} Retail Groups with ${res.itemsAssigned} categorized items!`);
+    loadGroups();
+  } catch (e) {
+    alert(`Error seeding groups: ${e.message}`);
+  }
+}
+
+function openGroupModal(group = null) {
+  const modal = document.getElementById('groupModal');
+  const title = document.getElementById('groupModalTitle');
+  const idInput = document.getElementById('groupId');
+  const nameInput = document.getElementById('groupName');
+  const catInput = document.getElementById('groupCategory');
+  const descInput = document.getElementById('groupDesc');
+
+  if (group) {
+    if (title) title.textContent = 'Edit Item Group';
+    if (idInput) idInput.value = group.id;
+    if (nameInput) nameInput.value = group.name || '';
+    if (catInput) catInput.value = group.category || 'General';
+    if (descInput) descInput.value = group.description || '';
+  } else {
+    if (title) title.textContent = 'Create Item Group';
+    if (idInput) idInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (catInput) catInput.value = 'General';
+    if (descInput) descInput.value = '';
+  }
+
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeGroupModal() {
+  const modal = document.getElementById('groupModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function saveGroup() {
+  const id = document.getElementById('groupId')?.value;
+  const name = document.getElementById('groupName')?.value.trim();
+  const category = document.getElementById('groupCategory')?.value || 'General';
+  const description = document.getElementById('groupDesc')?.value.trim();
+
+  if (!name) {
+    alert('Please enter a group name.');
+    return;
+  }
+
+  try {
+    if (id) {
+      await ipcRenderer.invoke('update-group', parseInt(id), { name, category, description });
+    } else {
+      await ipcRenderer.invoke('create-group', { name, category, description, group_type: 'manual' });
+    }
+    closeGroupModal();
+    loadGroups();
+  } catch (e) {
+    alert(`Error saving group: ${e.message}`);
+  }
+}
+
+async function deleteGroupAction(id, name) {
+  if (!confirm(`Are you sure you want to delete group "${name}"?`)) {
+    return;
+  }
+  try {
+    await ipcRenderer.invoke('delete-group', id);
+    if (currentGroupId === id) closeGroupItems();
+    loadGroups();
+  } catch (e) {
+    alert(`Error deleting group: ${e.message}`);
+  }
+}
+
+async function removeGroupItemAction(groupId, pbId) {
+  try {
+    await ipcRenderer.invoke('remove-item-from-group', groupId, pbId);
+    viewGroupItems(groupId, currentGroupName);
+    loadGroups();
+  } catch (e) {
+    alert(`Error removing item: ${e.message}`);
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}

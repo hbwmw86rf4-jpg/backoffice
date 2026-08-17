@@ -770,7 +770,7 @@ ipcMain.handle('get-dates-with-data', async () => {
 });
 
 // Groups
-ipcMain.handle('get-groups', async () => groups.getGroups());
+ipcMain.handle('get-groups', async (event, category) => groups.getGroups(category));
 ipcMain.handle('get-group-items', async (event, groupId) => groups.getGroupItems(groupId));
 ipcMain.handle('create-group', async (event, group) => groups.createGroup(group));
 ipcMain.handle('update-group', async (event, id, group) => groups.updateGroup(id, group));
@@ -781,6 +781,7 @@ ipcMain.handle('populate-group-from-condition', async (event, groupId) => groups
 ipcMain.handle('batch-update-prices', async (event, groupId, adjustmentType, adjustmentValue) => groups.batchUpdatePrices(groupId, adjustmentType, adjustmentValue));
 ipcMain.handle('get-all-brands', async () => groups.getAllBrands());
 ipcMain.handle('auto-assign-brands', async () => groups.autoAssignBrands());
+ipcMain.handle('seed-retail-groups', async () => groups.seedRetailGroups());
 
 // Tank Gauge
 ipcMain.handle('add-tank-reading', async (event, reading) => tankgauge.addTankReading(reading));

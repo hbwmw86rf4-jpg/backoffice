@@ -453,18 +453,33 @@
         <!-- Groups View -->
         <div id="view-groups" class="view">
           <h2>Item Groups & Price Management</h2>
-          <div class="toolbar">
+          <div class="toolbar" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <label style="font-size:13px; font-weight:600; color:#cbd5e1;">Category:</label>
+              <select id="groupCategoryFilter" class="date-input" style="font-weight:600; padding:6px 10px;">
+                <option value="All">All Categories</option>
+                <option value="Cigarettes">🚬 Cigarettes</option>
+                <option value="Tobacco & Smokeless">🍂 Tobacco & Smokeless</option>
+                <option value="Beverages">🥤 Beverages & Soda</option>
+                <option value="Energy Drinks">⚡ Energy Drinks</option>
+                <option value="Snacks">🍿 Snacks & Chips</option>
+                <option value="Beer & Malt">🍺 Beer & Malt</option>
+                <option value="General">📦 General</option>
+              </select>
+            </div>
+            <input type="text" id="groupSearchInput" placeholder="🔍 Search groups (e.g. Marlboro, Pepsi, 20oz, Newport)..." class="search-input" style="flex:1; min-width:240px; padding:6px 12px;">
             <button id="createGroupBtn" class="btn btn-primary">+ Create Group</button>
-            <button id="autoAssignBrandsBtn" class="btn btn-secondary">Auto-Assign Brands</button>
+            <button id="seedRetailGroupsBtn" class="btn btn-secondary" title="Re-match and populate standard manufacturer retail groups">⚡ Seed / Refresh Groups</button>
+            <button id="autoAssignBrandsBtn" class="btn btn-secondary" style="display:none">Auto-Assign Brands</button>
           </div>
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-label">Total Groups</div>
+              <div class="stat-label">Active Price Groups</div>
               <div class="stat-value" id="totalGroups">0</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Brands Identified</div>
-              <div class="stat-value" id="totalBrands">0</div>
+              <div class="stat-label">Categorized SKUs</div>
+              <div class="stat-value" id="totalGroupedItems">0</div>
             </div>
           </div>
           <div class="table-container">
@@ -472,40 +487,44 @@
             <table id="groupsTable" class="data-table">
               <thead>
                 <tr>
+                  <th style="width:140px;">Category</th>
                   <th>Group Name</th>
                   <th>Description</th>
-                  <th>Type</th>
-                  <th>Condition</th>
-                  <th>Items</th>
-                  <th>Price Adjustment</th>
-                  <th>Actions</th>
+                  <th style="text-align:center; width:90px;">Items</th>
+                  <th style="width:130px;">Default Adjust</th>
+                  <th style="text-align:right; width:120px;">Actions</th>
                 </tr>
               </thead>
               <tbody></tbody>
             </table>
           </div>
-          <div class="table-container" id="groupItemsContainer" style="display:none">
-            <h3 id="groupItemsTitle">Group Items</h3>
-            <div class="toolbar">
-              <button id="refreshGroupItemsBtn" class="btn btn-secondary">Refresh from Conditions</button>
-              <button id="batchUpdateBtn" class="btn btn-primary">Batch Update Prices</button>
-              <select id="batchAdjustType" class="date-input">
-                <option value="percentage">Percentage (%)</option>
-                <option value="fixed_amount">Fixed Amount ($)</option>
-                <option value="set_price">Set Price ($)</option>
+          <div class="table-container" id="groupItemsContainer" style="display:none; margin-top:24px; border:2px solid #6366f1; border-radius:8px; padding:16px; background:#fafafa;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <h3 id="groupItemsTitle" style="margin:0; color:#1e1b4b;">Group Items</h3>
+              <button class="btn btn-sm btn-secondary" onclick="closeGroupItems()">✕ Close Panel</button>
+            </div>
+            <div class="toolbar" style="background:#f1f5f9; padding:12px; border-radius:6px; margin-bottom:16px; display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+              <span style="font-size:13px; font-weight:700; color:#334155;">💰 Batch Update Price:</span>
+              <select id="batchAdjustType" class="date-input" style="font-weight:600;">
+                <option value="set_price">Set Exact Price ($)</option>
+                <option value="fixed_amount">Adjust Price (+/- $)</option>
+                <option value="percentage">Adjust Percentage (+/- %)</option>
                 <option value="markup_cost">Markup from Cost (%)</option>
               </select>
-              <input type="number" id="batchAdjustValue" placeholder="Value" class="date-input" step="0.01">
+              <input type="number" id="batchAdjustValue" placeholder="New Price or Value" class="date-input" step="0.01" style="width:160px;">
+              <button id="batchUpdateBtn" class="btn btn-primary" style="font-weight:600;">Apply to All Items</button>
+              <button id="refreshGroupItemsBtn" class="btn btn-secondary">Refresh Matching</button>
             </div>
             <table id="groupItemsTable" class="data-table">
               <thead>
                 <tr>
-                  <th>UPC</th>
+                  <th style="width:130px;">UPC</th>
                   <th>Name</th>
                   <th>Department</th>
-                  <th>Current Price</th>
-                  <th>Cost</th>
-                  <th>Actions</th>
+                  <th style="text-align:right;">Current Price</th>
+                  <th style="text-align:right;">Cost</th>
+                  <th style="text-align:right;">Margin %</th>
+                  <th style="text-align:center; width:90px;">Actions</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -1794,6 +1813,31 @@
         <div class="form-group"><label>Received By</label><input type="text" id="recvBy" required></div>
         <div id="recvPOItems"></div>
         <div class="form-actions"><button type="submit" class="btn btn-primary">Receive</button><button type="button" class="btn btn-secondary" onclick="closeReceivePOModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Group Modal -->
+  <div id="groupModal" class="modal" style="display:none">
+    <div class="modal-content" style="max-width:540px">
+      <div class="modal-header"><h3 id="groupModalTitle">Create Item Group</h3><button class="modal-close" onclick="closeGroupModal()">&times;</button></div>
+      <form id="groupForm">
+        <input type="hidden" id="groupId">
+        <div class="form-group"><label>Group Name</label><input type="text" id="groupName" placeholder="e.g. Marlboro - Regular Packs" required></div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="groupCategory" required>
+            <option value="Cigarettes">Cigarettes</option>
+            <option value="Tobacco & Smokeless">Tobacco & Smokeless</option>
+            <option value="Beverages">Beverages & Soda</option>
+            <option value="Energy Drinks">Energy Drinks</option>
+            <option value="Snacks">Snacks & Chips</option>
+            <option value="Beer & Malt">Beer & Malt</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Description</label><textarea id="groupDesc" rows="2" placeholder="Brief description of items included in this group"></textarea></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save Group</button><button type="button" class="btn btn-secondary" onclick="closeGroupModal()">Cancel</button></div>
       </form>
     </div>
   </div>

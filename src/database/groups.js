@@ -1,4 +1,5 @@
 const { getDb, saveDb } = require('./schema');
+const { seedRetailGroups } = require('./seed_retail_groups');
 let brandsData = {};
 try {
   brandsData = require('../data/brands.json');
@@ -10,9 +11,9 @@ try {
 function createGroup(group) {
   const db = getDb();
   const result = db.prepare(`
-    INSERT INTO item_groups (name, description, group_type, condition_type, condition_value, price_adjustment_type, price_adjustment_value)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(group.name, group.description, group.group_type || 'manual', group.condition_type, group.condition_value, group.price_adjustment_type || 'percentage', group.price_adjustment_value || 0);
+    INSERT INTO item_groups (name, description, category, group_type, condition_type, condition_value, price_adjustment_type, price_adjustment_value)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(group.name, group.description, group.category || 'General', group.group_type || 'manual', group.condition_type, group.condition_value, group.price_adjustment_type || 'percentage', group.price_adjustment_value || 0);
   saveDb();
   return { id: result.lastInsertRowid };
 }
@@ -20,9 +21,9 @@ function createGroup(group) {
 function updateGroup(id, group) {
   const db = getDb();
   db.prepare(`
-    UPDATE item_groups SET name = ?, description = ?, condition_type = ?, condition_value = ?, price_adjustment_type = ?, price_adjustment_value = ?
+    UPDATE item_groups SET name = ?, description = ?, category = ?, condition_type = ?, condition_value = ?, price_adjustment_type = ?, price_adjustment_value = ?
     WHERE id = ?
-  `).run(group.name, group.description, group.condition_type, group.condition_value, group.price_adjustment_type, group.price_adjustment_value, id);
+  `).run(group.name, group.description, group.category || 'General', group.condition_type, group.condition_value, group.price_adjustment_type, group.price_adjustment_value, id);
   saveDb();
   return { success: true };
 }
@@ -35,14 +36,28 @@ function deleteGroup(id) {
   return { success: true };
 }
 
-function getGroups() {
+function getGroups(category) {
   const db = getDb();
-  return db.prepare(`
+
+  // Check if groups table is empty, auto-seed if so
+  const countRow = db.prepare('SELECT COUNT(*) as count FROM item_groups').get();
+  if (!countRow || countRow.count === 0) {
+    console.log('[Groups] No groups found in database. Auto-seeding standard retail groups...');
+    seedRetailGroups(db);
+  }
+
+  let query = `
     SELECT g.*,
       (SELECT COUNT(*) FROM group_items WHERE group_id = g.id) as item_count
     FROM item_groups g
-    ORDER BY g.name
-  `).all();
+  `;
+  const params = [];
+  if (category && category !== 'All') {
+    query += ' WHERE g.category = ?';
+    params.push(category);
+  }
+  query += ' ORDER BY g.category, g.name';
+  return db.prepare(query).all(...params);
 }
 
 function getGroupItems(groupId) {
@@ -198,5 +213,5 @@ function autoAssignBrands() {
 module.exports = {
   createGroup, updateGroup, deleteGroup, getGroups, getGroupItems,
   addItemsToGroup, removeItemFromGroup, populateGroupFromCondition,
-  batchUpdatePrices, getAllBrands, autoAssignBrands
+  batchUpdatePrices, getAllBrands, autoAssignBrands, seedRetailGroups
 };
