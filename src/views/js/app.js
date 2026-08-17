@@ -1,22 +1,26 @@
-// Polyfill for browser environment
-const ipcRenderer = {
-  invoke: async (channel, ...args) => {
-    const res = await fetch('/api/ipc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ channel, args })
-    });
-    if (res.status === 401) {
-      window.location.replace('/login.html');
-      throw new Error('Unauthorized');
+// Universal IPC bridge (works in Electron desktop app AND in Web Browser)
+const isElectron = typeof window !== 'undefined' && typeof window.require === 'function';
+
+const ipcRenderer = isElectron ?
+  window.require('electron').ipcRenderer :
+  {
+    invoke: async (channel, ...args) => {
+      const res = await fetch('/api/ipc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel, args })
+      });
+      if (res.status === 401) {
+        window.location.replace('/login.html');
+        throw new Error('Unauthorized');
+      }
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.error || `IPC Error: ${res.statusText}`);
+      }
+      return await res.json();
     }
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || 'IPC Error');
-    }
-    return await res.json();
-  }
-};
+  };
 
 let currentDate = new Date().toLocaleDateString('en-CA');
 
@@ -25,6 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function checkAuth() {
+  if (isElectron) {
+    const label = document.getElementById('currentUserLabel');
+    if (label) label.textContent = 'Store Manager';
+    return;
+  }
   try {
     const res = await fetch('/api/auth-status');
     const data = await res.json();
@@ -34,7 +43,9 @@ async function checkAuth() {
       const label = document.getElementById('currentUserLabel');
       if (label) label.textContent = data.user.username;
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Auth check error:', e);
+  }
 }
 
 function initializeApp() {
@@ -47,10 +58,14 @@ function initializeApp() {
 
   const signOutBtn = document.getElementById('signOutBtn');
   if (signOutBtn) {
-    signOutBtn.addEventListener('click', async () => {
-      await fetch('/api/logout', { method: 'POST' });
-      window.location.replace('/login.html');
-    });
+    if (isElectron) {
+      signOutBtn.style.display = 'none';
+    } else {
+      signOutBtn.addEventListener('click', async () => {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.replace('/login.html');
+      });
+    }
   }
 }
 
@@ -901,154 +916,6 @@ function addDays(dateStr, days) {
   const date = new Date(dateStr);
   date.setDate(date.getDate() + days);
   return date.toLocaleDateString('en-CA');
-}
-
-// Groups
-let allGroups = [];
-let currentGroupId = null;
-
-async function loadGroups() {
-  allGroups = await ipcRenderer.invoke('get-groups');
-  document.getElementById('totalGroups').textContent = allGroups.length;
-  renderGroupsTable(allGroups);
-}
-
-function renderGroupsTable(groups) {
-  const tbody = document.querySelector('#groupsTable tbody');
-  tbody.innerHTML = groups.map(g => `
-    <tr>
-      <td>${g.name}</td>
-      <td>${g.description || '-'}</td>
-      <td>${g.group_type}</td>
-      <td>${g.condition_type || 'Manual'}: ${g.condition_value || '-'}</td>
-      <td>${g.item_count}</td>
-      <td>${g.price_adjustment_type}: ${g.price_adjustment_value}</td>
-      <td>
-        <button class="btn btn-sm btn-primary" onclick="viewGroupItems(${g.id}, '${g.name}')">View Items</button>
-        <button class="btn btn-sm btn-secondary" onclick="editGroup(${g.id})">Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteGroup(${g.id})">Delete</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-async function viewGroupItems(groupId, groupName) {
-  currentGroupId = groupId;
-  document.getElementById('groupItemsContainer').style.display = 'block';
-  document.getElementById('groupItemsTitle').textContent = `Items in: ${groupName}`;
-  const items = await ipcRenderer.invoke('get-group-items', groupId);
-  renderGroupItemsTable(items);
-}
-
-function renderGroupItemsTable(items) {
-  const tbody = document.querySelector('#groupItemsTable tbody');
-  tbody.innerHTML = items.map(i => {
-    const margin = i.price > 0 ? ((i.price - i.cost) / i.price * 100).toFixed(1) : 0;
-    return `
-      <tr>
-        <td>${i.upc}</td>
-        <td>${i.name}</td>
-        <td>${i.department || '-'}</td>
-        <td>${formatCurrency(i.price)}</td>
-        <td>${formatCurrency(i.cost)}</td>
-        <td><button class="btn btn-sm btn-danger" onclick="removeFromGroup(${i.group_item_id})">Remove</button></td>
-      </tr>
-    `;
-  }).join('');
-}
-
-async function removeFromGroup(pricebookId) {
-  if (currentGroupId) {
-    await ipcRenderer.invoke('remove-item-from-group', currentGroupId, pricebookId);
-    viewGroupItems(currentGroupId, document.getElementById('groupItemsTitle').textContent.replace('Items in: ', ''));
-  }
-}
-
-function openGroupModal(group = null) {
-  const modal = document.getElementById('groupModal');
-  const title = document.getElementById('groupModalTitle');
-
-  if (group) {
-    title.textContent = 'Edit Group';
-    document.getElementById('groupId').value = group.id;
-    document.getElementById('groupName').value = group.name;
-    document.getElementById('groupDescription').value = group.description || '';
-    document.getElementById('groupConditionType').value = group.condition_type || 'manual';
-    document.getElementById('groupConditionValue').value = group.condition_value || '';
-  } else {
-    title.textContent = 'Create Group';
-    document.getElementById('groupForm').reset();
-    document.getElementById('groupId').value = '';
-    document.getElementById('groupSelectedIds').value = '';
-    document.getElementById('groupSelectedItems').innerHTML = '';
-    document.getElementById('groupSelectedCount').textContent = '0';
-    document.getElementById('groupItemResults').innerHTML = '';
-  }
-
-  // Load departments and tax rates for filters
-  Promise.all([ipcRenderer.invoke('get-departments-list'), ipcRenderer.invoke('get-tax-rates')]).then(([depts, taxRates]) => {
-    const deptSel = document.getElementById('groupItemSearchDept');
-    deptSel.innerHTML = '<option value="">All Depts</option>' + depts.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
-    const taxSel = document.getElementById('groupItemSearchTax');
-    taxSel.innerHTML = '<option value="">All Tax</option>' + taxRates.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  });
-
-  modal.style.display = 'flex';
-}
-
-function closeGroupModal() {
-  document.getElementById('groupModal').style.display = 'none';
-}
-
-async function saveGroup() {
-  const id = document.getElementById('groupId').value;
-  const group = {
-    name: document.getElementById('groupName').value,
-    description: document.getElementById('groupDescription').value,
-    condition_type: document.getElementById('groupConditionType').value,
-    condition_value: document.getElementById('groupConditionValue').value,
-    group_type: 'dynamic'
-  };
-
-  if (id) {
-    await ipcRenderer.invoke('update-group', parseInt(id), group);
-  } else {
-    const result = await ipcRenderer.invoke('create-group', group);
-    if (group.condition_type === 'manual' && groupSelectedItems.length > 0) {
-      await ipcRenderer.invoke('add-items-to-group', result.id, groupSelectedItems.map(i => i.id));
-    } else {
-      await ipcRenderer.invoke('populate-group-from-condition', result.id);
-    }
-  }
-
-  closeGroupModal();
-  loadGroups();
-}
-
-async function editGroup(id) {
-  const group = allGroups.find(g => g.id === id);
-  if (group) openGroupModal(group);
-}
-
-async function deleteGroup(id) {
-  if (confirm('Delete this group?')) {
-    await ipcRenderer.invoke('delete-group', id);
-    loadGroups();
-    document.getElementById('groupItemsContainer').style.display = 'none';
-  }
-}
-
-async function batchUpdatePrices() {
-  if (!currentGroupId) return alert('Select a group first');
-  const adjustmentType = document.getElementById('batchAdjustType').value;
-  const adjustmentValue = parseFloat(document.getElementById('batchAdjustValue').value);
-  if (isNaN(adjustmentValue)) return alert('Enter a valid adjustment value');
-
-  if (confirm(`Apply ${adjustmentType} adjustment of ${adjustmentValue} to all items in this group?`)) {
-    const result = await ipcRenderer.invoke('batch-update-prices', currentGroupId, adjustmentType, adjustmentValue);
-    alert(`Updated ${result.updated} items`);
-    viewGroupItems(currentGroupId, document.getElementById('groupItemsTitle').textContent.replace('Items in: ', ''));
-  }
 }
 
 // Tank Gauge
