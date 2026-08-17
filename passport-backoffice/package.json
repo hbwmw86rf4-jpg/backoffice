@@ -1,0 +1,24 @@
+{
+  "name": "passport-backoffice",
+  "version": "1.0.0",
+  "description": "Gilbarco Passport POS Back Office System",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "cd node_modules/better-sqlite3 && npx node-gyp rebuild --release --target=30.5.1 --arch=x64 --dist-url=https://electronjs.org/headers",
+    "import-data": "node src/importers/run_import.js",
+    "parse-xml": "node src/importers/parse_xml.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "chokidar": "^3.6.0",
+    "electron": "^30.0.0",
+    "express": "^4.19.0",
+    "pdfkit": "^0.15.2",
+    "xlsx": "^0.18.5",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.2.0"
+  }
+}

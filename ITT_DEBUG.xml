@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<NAXML-MaintenanceRequest version="3.4">
+  <ItemMaintenance>
+    <TableAction type="update"/>
+    <RecordAction type="addchange"/>
+    <ITTDetail>
+      <RecordAction type="addchange"/>
+      <ItemCode>
+        <POSCodeFormat format="upcA"/>
+        <POSCode>09674900584</POSCode>
+        <POSCodeModifier name="0-Pack">0</POSCodeModifier>
+      </ItemCode>
+      <ITTData>
+        <ActiveFlag value="Yes"/>
+        <MerchandiseCode>15</MerchandiseCode>
+        <RegularSellPrice>9.0300</RegularSellPrice>
+        <Description>Christian brothers 375ml</Description>
+        <SellingUnits>1.00</SellingUnits>
+        <TaxStrategyId>101</TaxStrategyId>
+        <DiscountableFlg>1</DiscountableFlg>
+        <FoodStampableFlg>0</FoodStampableFlg>
+        <SalesRestrictCode>1002</SalesRestrictCode>
+        <LinkCode type="item">-1</LinkCode>
+      </ITTData>
+    </ITTDetail>
+  </ItemMaintenance>
+</NAXML-MaintenanceRequest>

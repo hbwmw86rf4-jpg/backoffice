@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Passport Back Office</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h2>Passport BOS</h2>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item active" data-view="dashboard">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Dashboard</span>
+        </li>
+        
+        <details class="nav-group" open>
+          <summary class="nav-group-summary">
+            <span class="nav-icon">🛒</span>
+            <span class="nav-label">Merchandise</span>
+            <span class="arrow">▶</span>
+          </summary>
+          <div class="nav-group-items">
+            <li class="nav-item" data-view="inventory"><span class="nav-icon">📦</span><span class="nav-label">Inventory</span></li>
+            <li class="nav-item" data-view="bulkupdate"><span class="nav-icon">📋</span><span class="nav-label">Bulk Updates</span></li>
+            <li class="nav-item" data-view="groups"><span class="nav-icon">🏷️</span><span class="nav-label">Item Groups</span></li>
+            <li class="nav-item" data-view="promotions"><span class="nav-icon">🎁</span><span class="nav-label">Promotions</span></li>
+            <li class="nav-item" data-view="scheduledprices"><span class="nav-icon">⏰</span><span class="nav-label">Sched Prices</span></li>
+            <li class="nav-item" data-view="lottery"><span class="nav-icon">🎰</span><span class="nav-label">Lottery</span></li>
+            <li class="nav-item" data-view="taxrates"><span class="nav-icon">🏛️</span><span class="nav-label">Tax Rates</span></li>
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary class="nav-group-summary">
+            <span class="nav-icon">⛽</span>
+            <span class="nav-label">Fuel Operations</span>
+            <span class="arrow">▶</span>
+          </summary>
+          <div class="nav-group-items">
+            <li class="nav-item" data-view="fuel"><span class="nav-icon">⛽</span><span class="nav-label">Fuel Sales</span></li>
+            <li class="nav-item" data-view="tankgauge"><span class="nav-icon">🛢️</span><span class="nav-label">Tank Gauge</span></li>
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary class="nav-group-summary">
+            <span class="nav-icon">📈</span>
+            <span class="nav-label">Sales & Cash</span>
+            <span class="arrow">▶</span>
+          </summary>
+          <div class="nav-group-items">
+            <li class="nav-item" data-view="cstore"><span class="nav-icon">🏪</span><span class="nav-label">C-Store Sales</span></li>
+            <li class="nav-item" data-view="payments"><span class="nav-icon">💳</span><span class="nav-label">Payments</span></li>
+            <li class="nav-item" data-view="dailybook"><span class="nav-icon">📒</span><span class="nav-label">Daily Book</span></li>
+            <li class="nav-item" data-view="cashcontrol"><span class="nav-icon">💵</span><span class="nav-label">Cash Control</span></li>
+            <li class="nav-item" data-view="accountsreceivable"><span class="nav-icon">📋</span><span class="nav-label">A/R Accounts</span></li>
+            <li class="nav-item" data-view="accounting"><span class="nav-icon">💰</span><span class="nav-label">Accounting</span></li>
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary class="nav-group-summary">
+            <span class="nav-icon">🏭</span>
+            <span class="nav-label">Stock & Vendors</span>
+            <span class="arrow">▶</span>
+          </summary>
+          <div class="nav-group-items">
+            <li class="nav-item" data-view="stockmanagement"><span class="nav-icon">📊</span><span class="nav-label">Stock Mgmt</span></li>
+            <li class="nav-item" data-view="suppliers"><span class="nav-icon">🏭</span><span class="nav-label">Suppliers</span></li>
+            <li class="nav-item" data-view="purchaseorders"><span class="nav-icon">🛒</span><span class="nav-label">Purchase Orders</span></li>
+            <li class="nav-item" data-view="edi"><span class="nav-icon">🔄</span><span class="nav-label">EDI</span></li>
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary class="nav-group-summary">
+            <span class="nav-icon">👥</span>
+            <span class="nav-label">Staff & Reports</span>
+            <span class="arrow">▶</span>
+          </summary>
+          <div class="nav-group-items">
+            <li class="nav-item" data-view="shifts"><span class="nav-icon">📋</span><span class="nav-label">Shift Reports</span></li>
+            <li class="nav-item" data-view="cashiers"><span class="nav-icon">👤</span><span class="nav-label">Cashiers</span></li>
+            <li class="nav-item" data-view="employees"><span class="nav-icon">👥</span><span class="nav-label">Employees</span></li>
+            <li class="nav-item" data-view="lossprevention"><span class="nav-icon">🛡️</span><span class="nav-label">Loss Prevention</span></li>
+            <li class="nav-item" data-view="extrareports"><span class="nav-icon">📈</span><span class="nav-label">Extra Reports</span></li>
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary class="nav-group-summary">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">POS Integration</span>
+            <span class="arrow">▶</span>
+          </summary>
+          <div class="nav-group-items">
+            <li class="nav-item" data-view="import"><span class="nav-icon">📥</span><span class="nav-label">Import Data</span></li>
+            <li class="nav-item" data-view="sendtopos"><span class="nav-icon">📡</span><span class="nav-label">Send to POS</span></li>
+            <li class="nav-item" data-view="possynclog"><span class="nav-icon">📋</span><span class="nav-label">POS Sync Log</span></li>
+            <li class="nav-item" data-view="export"><span class="nav-icon">📤</span><span class="nav-label">Export Data</span></li>
+          </div>
+        </details>
+      </ul>
+    </nav>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="date-picker">
+          <button id="prevDate" class="btn btn-sm">&lt;</button>
+          <input type="date" id="reportDate" class="date-input">
+          <button id="nextDate" class="btn btn-sm">&gt;</button>
+          <button id="todayBtn" class="btn btn-sm btn-primary">Today</button>
+        </div>
+        <div class="top-bar-right">
+          <span id="lastImport" class="text-muted"></span>
+        </div>
+      </header>
+
+      <div id="viewContainer" class="view-container">
+        <!-- Dashboard View -->
+        <div id="view-dashboard" class="view active">
+          <h2>Sales Dashboard</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Sales</div>
+              <div class="stat-value" id="totalSales">$0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Fuel Sales</div>
+              <div class="stat-value" id="fuelSales">$0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">C-Store Sales</div>
+              <div class="stat-value" id="cstoreSales">$0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Transactions</div>
+              <div class="stat-value" id="totalTx">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Gallons Sold</div>
+              <div class="stat-value" id="totalGallons">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Tax Collected</div>
+              <div class="stat-value" id="totalTax">$0.00</div>
+            </div>
+          </div>
+
+          <div class="charts-row">
+            <div class="chart-card">
+              <h3>Payment Breakdown</h3>
+              <div id="paymentChart" class="chart"></div>
+            </div>
+            <div class="chart-card">
+              <h3>Hourly Sales</h3>
+              <div id="hourlyChart" class="chart"></div>
+            </div>
+          </div>
+
+          <div class="charts-row">
+            <div class="chart-card">
+              <h3>Top Cashiers</h3>
+              <div id="cashierChart" class="chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fuel View -->
+        <div id="view-fuel" class="view">
+          <h2>Fuel Sales Report</h2>
+          <div class="date-range">
+            <label>From:</label>
+            <input type="date" id="fuelStartDate" class="date-input">
+            <label>To:</label>
+            <input type="date" id="fuelEndDate" class="date-input">
+            <button id="loadFuelReport" class="btn btn-primary">Load Report</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Fuel Sales</div>
+              <div class="stat-value" id="fuelTotalSales">$0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Gallons</div>
+              <div class="stat-value" id="fuelTotalGallons">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avg Price/Gal</div>
+              <div class="stat-value" id="fuelAvgPrice">$0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Promotions</div>
+              <div class="stat-value" id="fuelPromotions">$0.00</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table id="fuelGradeTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Grade</th>
+                  <th>Transactions</th>
+                  <th>Gallons</th>
+                  <th>Sales</th>
+                  <th>Avg Price</th>
+                  <th>Promotions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- C-Store View -->
+        <div id="view-cstore" class="view">
+          <h2>C-Store Sales Report</h2>
+          <div class="date-range">
+            <label>From:</label>
+            <input type="date" id="cstoreStartDate" class="date-input">
+            <label>To:</label>
+            <input type="date" id="cstoreEndDate" class="date-input">
+            <button id="loadCstoreReport" class="btn btn-primary">Load Report</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total C-Store Sales</div>
+              <div class="stat-value" id="cstoreTotalSales">$0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Unique Items Sold</div>
+              <div class="stat-value" id="cstoreUniqueItems">0</div>
+            </div>
+          </div>
+          <div class="charts-row">
+            <div class="chart-card">
+              <h3>Sales by Department</h3>
+              <div id="deptChart" class="chart"></div>
+            </div>
+          </div>
+          <div class="table-container">
+            <h3>Top 20 Items</h3>
+            <table id="cstoreItemTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>UPC</th>
+                  <th>Item</th>
+                  <th>Qty Sold</th>
+                  <th>Sales</th>
+                  <th>Transactions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payments View -->
+        <div id="view-payments" class="view">
+          <h2>Payment Reconciliation</h2>
+          <div class="date-picker">
+            <label>Date:</label>
+            <input type="date" id="paymentDate" class="date-input">
+            <button id="loadPaymentReport" class="btn btn-primary">Load</button>
+          </div>
+          <div class="table-container">
+            <table id="paymentTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Payment Type</th>
+                  <th>Sub Type</th>
+                  <th>Count</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cashiers View -->
+        <div id="view-cashiers" class="view">
+          <h2>Cashier Performance</h2>
+          <div class="date-range">
+            <label>From:</label>
+            <input type="date" id="cashierStartDate" class="date-input">
+            <label>To:</label>
+            <input type="date" id="cashierEndDate" class="date-input">
+            <button id="loadCashierReport" class="btn btn-primary">Load Report</button>
+          </div>
+          <div class="table-container">
+            <table id="cashierTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Cashier ID</th>
+                  <th>Transactions</th>
+                  <th>Total Sales</th>
+                  <th>Avg Sale</th>
+                  <th>First Sale</th>
+                  <th>Last Sale</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Shifts View -->
+        <div id="view-shifts" class="view">
+          <h2>Shift Reports</h2>
+          <div class="date-picker">
+            <label>Date:</label>
+            <input type="date" id="shiftDate" class="date-input">
+            <button id="loadShiftReport" class="btn btn-primary">Load</button>
+          </div>
+          <div class="table-container">
+            <table id="shiftTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Register</th>
+                  <th>Till</th>
+                  <th>Shift Start</th>
+                  <th>Shift End</th>
+                  <th>Transactions</th>
+                  <th>Gross</th>
+                  <th>Tax</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Employees View -->
+        <div id="view-employees" class="view">
+          <h2>Employee Management</h2>
+          <div class="toolbar">
+            <button id="addEmployeeBtn" class="btn btn-primary">+ Add Employee</button>
+          </div>
+          <div class="table-container">
+            <table id="employeeTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Hourly Rate</th>
+                  <th>Status</th>
+                  <th>Hire Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Inventory View -->
+        <div id="view-inventory" class="view">
+          <h2>Inventory (Pricebook)</h2>
+          <div class="toolbar">
+            <button id="importPricebookBtn" class="btn btn-primary">Import Pricebook</button>
+            <button id="addNewItemBtn" class="btn btn-primary">+ New Item</button>
+            <input type="text" id="inventorySearch" placeholder="Search items..." class="search-input">
+            <select id="inventoryPageSize" class="date-input">
+              <option value="50">50 per page</option>
+              <option value="100" selected>100 per page</option>
+              <option value="250">250 per page</option>
+              <option value="500">500 per page</option>
+            </select>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total SKUs</div>
+              <div class="stat-value" id="totalSkus">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Departments</div>
+              <div class="stat-value" id="totalDepts">0</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table id="inventoryTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>UPC</th>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Cost</th>
+                  <th>Price</th>
+                  <th>Margin</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="pagination" id="inventoryPagination"></div>
+          </div>
+        </div>
+
+        <!-- Import View -->
+        <div id="view-import" class="view">
+          <h2>Import Data</h2>
+          <div class="import-section">
+            <div class="import-card">
+              <h3>XML Transaction Data</h3>
+              <p>Import sales transactions from the Passport XML Gateway</p>
+              <div class="import-actions">
+                <button id="importSingleXml" class="btn btn-primary">Import Single XML File</button>
+                <button id="importAllXml" class="btn btn-secondary">Import All from BOOutbox</button>
+              </div>
+              <div id="xmlImportStatus" class="import-status"></div>
+            </div>
+            <div class="import-card">
+              <h3>Pricebook Data</h3>
+              <p>Import item pricing and inventory from Excel file</p>
+              <div class="import-actions">
+                <button id="importPricebookFile" class="btn btn-primary">Import Pricebook</button>
+              </div>
+              <div id="pricebookImportStatus" class="import-status"></div>
+            </div>
+          </div>
+          <div class="table-container">
+            <h3>Import History</h3>
+            <table id="importLogTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Filename</th>
+                  <th>Type</th>
+                  <th>Records</th>
+                  <th>Status</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Groups View -->
+        <div id="view-groups" class="view">
+          <h2>Item Groups & Price Management</h2>
+          <div class="toolbar">
+            <button id="createGroupBtn" class="btn btn-primary">+ Create Group</button>
+            <button id="autoAssignBrandsBtn" class="btn btn-secondary">Auto-Assign Brands</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Groups</div>
+              <div class="stat-value" id="totalGroups">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Brands Identified</div>
+              <div class="stat-value" id="totalBrands">0</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <h3>Item Groups</h3>
+            <table id="groupsTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Group Name</th>
+                  <th>Description</th>
+                  <th>Type</th>
+                  <th>Condition</th>
+                  <th>Items</th>
+                  <th>Price Adjustment</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="table-container" id="groupItemsContainer" style="display:none">
+            <h3 id="groupItemsTitle">Group Items</h3>
+            <div class="toolbar">
+              <button id="refreshGroupItemsBtn" class="btn btn-secondary">Refresh from Conditions</button>
+              <button id="batchUpdateBtn" class="btn btn-primary">Batch Update Prices</button>
+              <select id="batchAdjustType" class="date-input">
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed_amount">Fixed Amount ($)</option>
+                <option value="set_price">Set Price ($)</option>
+                <option value="markup_cost">Markup from Cost (%)</option>
+              </select>
+              <input type="number" id="batchAdjustValue" placeholder="Value" class="date-input" step="0.01">
+            </div>
+            <table id="groupItemsTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>UPC</th>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Current Price</th>
+                  <th>Cost</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bulk Updates View -->
+        <div id="view-bulkupdate" class="view">
+          <h2>Bulk Updates</h2>
+          <div class="bulk-search-filters" style="background:#f9fafb; padding:16px; border-radius:8px; margin-bottom:16px;">
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px; margin-bottom:12px;">
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Item Name</label>
+                <input type="text" id="bulkFilterName" placeholder="e.g. marl" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Scan Code (UPC)</label>
+                <input type="text" id="bulkFilterUpc" placeholder="UPC" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Department</label>
+                <select id="bulkFilterDept" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;"><option value="">All</option></select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Tax Type</label>
+                <select id="bulkFilterTax" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;"><option value="">All</option></select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Min Price</label>
+                <input type="number" id="bulkFilterMinPrice" step="0.01" min="0" placeholder="0.00" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Max Price</label>
+                <input type="number" id="bulkFilterMaxPrice" step="0.01" min="0" placeholder="99.99" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Min Cost</label>
+                <input type="number" id="bulkFilterMinCost" step="0.01" min="0" placeholder="0.00" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Max Cost</label>
+                <input type="number" id="bulkFilterMaxCost" step="0.01" min="0" placeholder="99.99" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Age Restriction</label>
+                <select id="bulkFilterAge" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+                  <option value="">All</option>
+                  <option value="">None</option>
+                  <option value="18">Must be 18+</option>
+                  <option value="21">Must be 21+</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:12px; font-weight:600;">Vendor</label>
+                <input type="text" id="bulkFilterVendor" placeholder="Vendor" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button id="bulkSearchBtn" class="btn btn-primary" style="padding:6px 16px;">Search</button>
+              <span id="bulkResultCount" style="font-size:13px; color:#6b7280; margin-left:8px;"></span>
+              <div style="flex:1"></div>
+              <button id="bulkSaveBtn" class="btn btn-secondary" style="padding:6px 16px;">Save Changes</button>
+              <button id="bulkSendBtn" class="btn btn-primary" style="padding:6px 16px;">Save & Send to POS</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table id="bulkUpdateTable" class="data-table" style="font-size:13px;">
+              <thead>
+                <tr>
+                  <th style="min-width:60px;"><input type="checkbox" id="bulkSelectAll"></th>
+                  <th style="min-width:100px;">UPC</th>
+                  <th style="min-width:150px;">Item Name</th>
+                  <th style="min-width:130px;">
+                    <div>Department</div>
+                    <div style="display:flex; gap:4px; margin-top:2px;">
+                      <select id="bulkColDept" style="flex:1; padding:2px 4px; font-size:11px; border:1px solid #d1d5db; border-radius:3px;"><option value=""></option></select>
+                      <button class="bulk-col-apply" data-col="department" title="Apply to all" style="padding:2px 6px; cursor:pointer; background:#e5e7eb; border:1px solid #d1d5db; border-radius:3px; font-size:11px;">&#8595;</button>
+                    </div>
+                  </th>
+                  <th style="min-width:110px;">
+                    <div>Tax Type</div>
+                    <div style="display:flex; gap:4px; margin-top:2px;">
+                      <select id="bulkColTax" style="flex:1; padding:2px 4px; font-size:11px; border:1px solid #d1d5db; border-radius:3px;"><option value=""></option></select>
+                      <button class="bulk-col-apply" data-col="tax_rate" title="Apply to all" style="padding:2px 6px; cursor:pointer; background:#e5e7eb; border:1px solid #d1d5db; border-radius:3px; font-size:11px;">&#8595;</button>
+                    </div>
+                  </th>
+                  <th style="min-width:100px;">Cost</th>
+                  <th style="min-width:100px;">Price</th>
+                  <th style="min-width:110px;">
+                    <div>New Price</div>
+                    <div style="display:flex; gap:4px; margin-top:2px;">
+                      <input type="number" id="bulkColPrice" step="0.01" min="0" style="flex:1; padding:2px 4px; font-size:11px; border:1px solid #d1d5db; border-radius:3px; width:70px;">
+                      <button class="bulk-col-apply" data-col="price" title="Apply to all" style="padding:2px 6px; cursor:pointer; background:#e5e7eb; border:1px solid #d1d5db; border-radius:3px; font-size:11px;">&#8595;</button>
+                    </div>
+                  </th>
+                  <th style="min-width:110px;">
+                    <div>Age Restriction</div>
+                    <div style="display:flex; gap:4px; margin-top:2px;">
+                      <select id="bulkColAge" style="flex:1; padding:2px 4px; font-size:11px; border:1px solid #d1d5db; border-radius:3px;">
+                        <option value=""></option>
+                        <option value="">None</option>
+                        <option value="18">18+</option>
+                        <option value="21">21+</option>
+                      </select>
+                      <button class="bulk-col-apply" data-col="age" title="Apply to all" style="padding:2px 6px; cursor:pointer; background:#e5e7eb; border:1px solid #d1d5db; border-radius:3px; font-size:11px;">&#8595;</button>
+                    </div>
+                  </th>
+                  <th style="min-width:120px;">
+                    <div>Vendor</div>
+                    <div style="display:flex; gap:4px; margin-top:2px;">
+                      <input type="text" id="bulkColVendor" style="flex:1; padding:2px 4px; font-size:11px; border:1px solid #d1d5db; border-radius:3px; width:80px;">
+                      <button class="bulk-col-apply" data-col="vendor" title="Apply to all" style="padding:2px 6px; cursor:pointer; background:#e5e7eb; border:1px solid #d1d5db; border-radius:3px; font-size:11px;">&#8595;</button>
+                    </div>
+                  </th>
+                  <th style="min-width:100px;">Margin</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Promotions View -->
+        <div id="view-promotions" class="view">
+          <h2>Promotions Management</h2>
+          <div class="toolbar">
+            <button id="createComboBtn" class="btn btn-primary">+ Create Combo Deal</button>
+            <button id="createMixMatchBtn" class="btn btn-primary">+ Create Mix & Match</button>
+            <button id="createItemListBtn" class="btn btn-secondary">+ Create Item List</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Active Promotions</div>
+              <div class="stat-value" id="activePromos">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Sent to POS</div>
+              <div class="stat-value" id="sentPromos">0</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <h3>Combo Deals</h3>
+            <table id="comboTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Items</th>
+                  <th>Combo Price</th>
+                  <th>Valid From</th>
+                  <th>Valid To</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="table-container">
+            <h3>Mix & Match Promotions</h3>
+            <table id="mixMatchTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Required Qty</th>
+                  <th>Discount</th>
+                  <th>Valid From</th>
+                  <th>Valid To</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tank Gauge View -->
+        <div id="view-tankgauge" class="view">
+          <h2>Tank Gauge & Fuel Inventory</h2>
+          <div class="toolbar">
+            <button id="addTankReadingBtn" class="btn btn-primary">+ Add Tank Reading</button>
+            <button id="addFuelDeliveryBtn" class="btn btn-primary">+ Add Fuel Delivery</button>
+            <button id="refreshTankStatusBtn" class="btn btn-secondary">Refresh Status</button>
+          </div>
+          <div id="tankStatusContainer" class="stats-grid">
+            <!-- Tank status cards will be rendered here -->
+          </div>
+          <div class="charts-row">
+            <div class="chart-card">
+              <h3>Recent Deliveries</h3>
+              <table id="deliveriesTable" class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Grade</th>
+                    <th>Gallons</th>
+                    <th>Cost/Gal</th>
+                    <th>Total</th>
+                    <th>Supplier</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="chart-card">
+              <h3>Fuel Sales by Grade</h3>
+              <div id="fuelGradeChart" class="chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Send to POS View -->
+        <div id="view-sendtopos" class="view">
+          <h2>Send Price Changes to POS</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Pending Changes</div>
+              <div class="stat-value" id="pendingCount">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Last Send</div>
+              <div class="stat-value" id="lastSendTime">Never</div>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button id="scanOutboxBtn" class="btn btn-secondary">Scan BOOutBox</button>
+            <button id="refreshPendingBtn" class="btn btn-secondary">Refresh Pending</button>
+            <button id="sendAllPendingBtn" class="btn btn-primary">Send All Pending Changes</button>
+            <button id="checkAckBtn" class="btn btn-secondary">Check ACK Files</button>
+          </div>
+          <div id="sendStatus" class="import-status" style="display:none"></div>
+          <div class="table-container">
+            <h3>Pending Price Changes</h3>
+            <table id="pendingChangesTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>UPC</th>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Old Price</th>
+                  <th>New Price</th>
+                  <th>Changed</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="table-container">
+            <h3>Send History</h3>
+            <table id="sendHistoryTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Filename</th>
+                  <th>Type</th>
+                  <th>Records</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="ackResults" class="table-container" style="display:none">
+            <h3>ACK Files from POS</h3>
+            <div id="ackContent"></div>
+          </div>
+        </div>
+
+        <!-- POS Sync Log View -->
+        <div id="view-possynclog" class="view">
+          <h2>POS Sync Log</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Sends</div>
+              <div class="stat-value" id="posSyncTotalSends">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">ACKs Received</div>
+              <div class="stat-value" id="posSyncAcksReceived">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Pending ACK</div>
+              <div class="stat-value" id="posSyncPendingAck">0</div>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button id="refreshPosSyncLogBtn" class="btn btn-secondary">Refresh</button>
+          </div>
+          <div id="posSyncStatus" class="import-status" style="display:none"></div>
+          <div class="table-container">
+            <table id="posSyncLogTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Sent At</th>
+                  <th>Filename</th>
+                  <th>Type</th>
+                  <th>Items</th>
+                  <th>ACK Status</th>
+                  <th>ACK Message</th>
+                  <th>ACK At</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Export View -->
+        <div id="view-export" class="view">
+          <h2>Export Reports</h2>
+          <div class="export-section">
+            <div class="export-card">
+              <h3>Sales Report</h3>
+              <p>Export daily sales transactions</p>
+              <div class="export-controls">
+                <input type="date" id="exportSalesDate" class="date-input">
+                <select id="exportSalesFormat" class="date-input">
+                  <option value="csv">CSV</option>
+                  <option value="xlsx">Excel</option>
+                  <option value="pdf">PDF</option>
+                </select>
+                <button id="exportSalesBtn" class="btn btn-primary">Export</button>
+              </div>
+            </div>
+            <div class="export-card">
+              <h3>Fuel Sales Report</h3>
+              <p>Export fuel sales by grade and date</p>
+              <div class="export-controls">
+                <input type="date" id="exportFuelStart" class="date-input">
+                <input type="date" id="exportFuelEnd" class="date-input">
+                <select id="exportFuelFormat" class="date-input">
+                  <option value="csv">CSV</option>
+                  <option value="xlsx">Excel</option>
+                  <option value="pdf">PDF</option>
+                </select>
+                <button id="exportFuelBtn" class="btn btn-primary">Export</button>
+              </div>
+            </div>
+            <div class="export-card">
+              <h3>C-Store Sales Report</h3>
+              <p>Export convenience store item sales</p>
+              <div class="export-controls">
+                <input type="date" id="exportCstoreStart" class="date-input">
+                <input type="date" id="exportCstoreEnd" class="date-input">
+                <select id="exportCstoreFormat" class="date-input">
+                  <option value="csv">CSV</option>
+                  <option value="xlsx">Excel</option>
+                  <option value="pdf">PDF</option>
+                </select>
+                <button id="exportCstoreBtn" class="btn btn-primary">Export</button>
+              </div>
+            </div>
+            <div class="export-card">
+              <h3>Pricebook Export</h3>
+              <p>Export complete pricebook with all items</p>
+              <div class="export-controls">
+                <select id="exportPricebookFormat" class="date-input">
+                  <option value="csv">CSV</option>
+                  <option value="xlsx">Excel</option>
+                  <option value="pdf">PDF</option>
+                </select>
+                <button id="exportPricebookBtn" class="btn btn-primary">Export</button>
+              </div>
+            </div>
+            <div class="export-card">
+              <h3>Payment Report</h3>
+              <p>Export payment methods breakdown</p>
+              <div class="export-controls">
+                <input type="date" id="exportPaymentDate" class="date-input">
+                <select id="exportPaymentFormat" class="date-input">
+                  <option value="csv">CSV</option>
+                  <option value="xlsx">Excel</option>
+                  <option value="pdf">PDF</option>
+                </select>
+                <button id="exportPaymentBtn" class="btn btn-primary">Export</button>
+              </div>
+            </div>
+          </div>
+          <div id="exportStatus" class="import-status" style="display:none"></div>
+        </div>
+
+        <!-- Daily Book View -->
+        <div id="view-dailybook" class="view">
+          <h2>Daily Book & Reconciliation</h2>
+          <div class="toolbar">
+            <button id="createDailyBookBtn" class="btn btn-primary">Open Daily Book</button>
+            <button id="closeDailyBookBtn" class="btn btn-danger">Close Day (Z Report)</button>
+            <button id="printXReportBtn" class="btn btn-secondary">Print X Report</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Sales</div><div class="stat-value" id="dbTotalSales">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Fuel Sales</div><div class="stat-value" id="dbFuelSales">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">C-Store Sales</div><div class="stat-value" id="dbCstoreSales">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Tax</div><div class="stat-value" id="dbTax">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Paid In</div><div class="stat-value" id="dbPaidIn">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Paid Out</div><div class="stat-value" id="dbPaidOut">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Safe Drops</div><div class="stat-value" id="dbSafeDrops">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Status</div><div class="stat-value" id="dbStatus">-</div></div>
+          </div>
+          <div class="charts-row">
+            <div class="chart-card">
+              <h3>X Report Summary</h3>
+              <div id="xReportContent"></div>
+            </div>
+            <div class="chart-card">
+              <h3>Cash Reconciliation</h3>
+              <div id="cashReconContent"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cash Control View -->
+        <div id="view-cashcontrol" class="view">
+          <h2>Cash Control</h2>
+          <div class="toolbar">
+            <button id="addCashMovementBtn" class="btn btn-primary">+ Cash Movement</button>
+            <button id="addHandoverBtn" class="btn btn-primary">+ Payment Handover</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Cash Sales</div><div class="stat-value" id="ccCashSales">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Paid In</div><div class="stat-value" id="ccPaidIn">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Paid Out</div><div class="stat-value" id="ccPaidOut">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Safe Drops</div><div class="stat-value" id="ccSafeDrops">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Expected in Drawer</div><div class="stat-value" id="ccExpected">$0.00</div></div>
+          </div>
+          <div class="table-container">
+            <h3>Cash Movements</h3>
+            <div class="date-range">
+              <label>From:</label><input type="date" id="ccStartDate" class="date-input">
+              <label>To:</label><input type="date" id="ccEndDate" class="date-input">
+              <button id="loadCashMovements" class="btn btn-primary">Load</button>
+            </div>
+            <table id="cashMovementsTable" class="data-table"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Reason</th><th>Register</th><th>Cashier</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="table-container">
+            <h3>Payment Handovers</h3>
+            <table id="handoversTable" class="data-table"><thead><tr><th>Date</th><th>From</th><th>To</th><th>Register</th><th>Cash</th><th>Card</th><th>Total</th><th>Notes</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Suppliers View -->
+        <div id="view-suppliers" class="view">
+          <h2>Supplier Management</h2>
+          <div class="toolbar">
+            <button id="addSupplierBtn" class="btn btn-primary">+ Add Supplier</button>
+          </div>
+          <div class="table-container">
+            <table id="suppliersTable" class="data-table"><thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>Phone</th><th>Lead Time</th><th>Terms</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="table-container" id="supplierItemsContainer" style="display:none">
+            <h3 id="supplierItemsTitle">Supplier Items</h3>
+            <button id="addSupplierItemBtn" class="btn btn-primary btn-sm">+ Add Item</button>
+            <table id="supplierItemsTable" class="data-table"><thead><tr><th>UPC</th><th>Name</th><th>Supplier UPC</th><th>Supplier Cost</th><th>Pack Size</th><th>Primary</th><th>Actions</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Purchase Orders View -->
+        <div id="view-purchaseorders" class="view">
+          <h2>Purchase Orders</h2>
+          <div class="toolbar">
+            <button id="createPOBtn" class="btn btn-primary">+ Create PO</button>
+            <button id="receivePOBtn" class="btn btn-secondary">Receive PO</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Pending POs</div><div class="stat-value" id="pendingPOs">0</div></div>
+            <div class="stat-card"><div class="stat-label">Received POs</div><div class="stat-value" id="receivedPOs">0</div></div>
+          </div>
+          <div class="table-container">
+            <table id="poTable" class="data-table"><thead><tr><th>PO #</th><th>Supplier</th><th>Order Date</th><th>Expected</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="table-container" id="poDetailContainer" style="display:none">
+            <h3 id="poDetailTitle">PO Details</h3>
+            <table id="poDetailTable" class="data-table"><thead><tr><th>Item</th><th>UPC</th><th>Ordered</th><th>Received</th><th>Cost</th><th>Total</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Accounts Receivable View -->
+        <div id="view-accountsreceivable" class="view">
+          <h2>Accounts Receivable</h2>
+          <div class="toolbar">
+            <button id="addCustomerBtn" class="btn btn-primary">+ Add Customer</button>
+            <button id="createInvoiceBtn" class="btn btn-primary">+ Create Invoice</button>
+            <button id="recordPaymentBtn" class="btn btn-secondary">+ Record Payment</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Outstanding</div><div class="stat-value" id="arTotalOutstanding">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Active Customers</div><div class="stat-value" id="arActiveCustomers">0</div></div>
+          </div>
+          <div class="table-container">
+            <h3>Customer Aging</h3>
+            <table id="agingTable" class="data-table"><thead><tr><th>Customer</th><th>Current</th><th>30 Days</th><th>60 Days</th><th>90+ Days</th><th>Total Balance</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="table-container">
+            <h3>Recent Invoices</h3>
+            <table id="invoicesTable" class="data-table"><thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Due</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Stock Management View -->
+        <div id="view-stockmanagement" class="view">
+          <h2>Stock Management</h2>
+          <div class="toolbar">
+            <button id="addStockMovementBtn" class="btn btn-primary">+ Stock Movement</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Low Stock Items</div><div class="stat-value" id="lowStockCount">0</div></div>
+            <div class="stat-card"><div class="stat-label">Inventory Value</div><div class="stat-value" id="totalInventoryValue">$0.00</div></div>
+          </div>
+          <div class="tabs">
+            <button class="tab-btn active" onclick="showStockTab('movements')">Stock Movements</button>
+            <button class="tab-btn" onclick="showStockTab('discrepancy')">Discrepancies</button>
+            <button class="tab-btn" onclick="showStockTab('returns')">Returns</button>
+            <button class="tab-btn" onclick="showStockTab('transfers')">Transfers</button>
+            <button class="tab-btn" onclick="showStockTab('perished')">Perished/Damaged</button>
+            <button class="tab-btn" onclick="showStockTab('reorder')">Reorder Alerts</button>
+          </div>
+          <div id="stockTab-movements" class="stock-tab active">
+            <div class="date-range"><label>From:</label><input type="date" id="smStartDate" class="date-input"><label>To:</label><input type="date" id="smEndDate" class="date-input"><button id="loadStockMovements" class="btn btn-primary">Load</button></div>
+            <table id="stockMovementsTable" class="data-table"><thead><tr><th>Date</th><th>Type</th><th>UPC</th><th>Name</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Notes</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="stockTab-discrepancy" class="stock-tab" style="display:none">
+            <table id="discrepancyTable" class="data-table"><thead><tr><th>UPC</th><th>Name</th><th>Qty In</th><th>Qty Out</th><th>Net</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="stockTab-returns" class="stock-tab" style="display:none">
+            <table id="returnsTable" class="data-table"><thead><tr><th>Date</th><th>Type</th><th>UPC</th><th>Name</th><th>Qty</th><th>Cost</th><th>Total</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="stockTab-transfers" class="stock-tab" style="display:none">
+            <table id="transfersTable" class="data-table"><thead><tr><th>Date</th><th>UPC</th><th>Name</th><th>Qty</th><th>Cost</th><th>Total</th><th>Notes</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="stockTab-perished" class="stock-tab" style="display:none">
+            <table id="perishedTable" class="data-table"><thead><tr><th>Date</th><th>Type</th><th>UPC</th><th>Name</th><th>Qty</th><th>Cost</th><th>Total</th><th>Notes</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="stockTab-reorder" class="stock-tab" style="display:none">
+            <table id="reorderTable" class="data-table"><thead><tr><th>UPC</th><th>Name</th><th>Department</th><th>Current Stock</th><th>Price</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Lottery View -->
+        <div id="view-lottery" class="view">
+          <h2>Lottery Management</h2>
+          <div class="toolbar">
+            <button id="addLotterySaleBtn" class="btn btn-primary">+ Record Sale</button>
+            <button id="addLotteryReconBtn" class="btn btn-primary">+ Reconcile</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Sales</div><div class="stat-value" id="lotteryTotalSales">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Total Payouts</div><div class="stat-value" id="lotteryTotalPayouts">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Net Commission</div><div class="stat-value" id="lotteryNetCommission">$0.00</div></div>
+            <div class="stat-card"><div class="stat-label">Tickets Sold</div><div class="stat-value" id="lotteryTicketsSold">0</div></div>
+          </div>
+          <div class="charts-row">
+            <div class="chart-card"><h3>Sales by Game</h3><div id="lotteryGameChart" class="chart"></div></div>
+          </div>
+          <div class="table-container">
+            <h3>Recent Sales</h3>
+            <table id="lotterySalesTable" class="data-table"><thead><tr><th>Date</th><th>Game</th><th>Ticket #</th><th>Sale</th><th>Payout</th><th>Commission</th><th>Cashier</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="table-container">
+            <h3>Reconciliations</h3>
+            <table id="lotteryReconTable" class="data-table"><thead><tr><th>Date</th><th>Game</th><th>Beg Inv</th><th>Received</th><th>Sold</th><th>Returned</th><th>End Inv</th><th>Sales</th><th>Payouts</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Scheduled Price Changes View -->
+        <div id="view-scheduledprices" class="view">
+          <h2>Scheduled Price Changes</h2>
+          <div class="toolbar">
+            <button id="addScheduledPriceBtn" class="btn btn-primary">+ Schedule Price Change</button>
+            <button id="applyScheduledBtn" class="btn btn-secondary">Apply Now</button>
+          </div>
+          <div class="table-container">
+            <h3>Scheduled Changes</h3>
+            <table id="scheduledPricesTable" class="data-table"><thead><tr><th>UPC</th><th>Name</th><th>Dept</th><th>Old Price</th><th>New Price</th><th>Effective</th><th>Expires</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Loss Prevention View -->
+        <div id="view-lossprevention" class="view">
+          <h2>Loss Prevention & Security</h2>
+          <div class="toolbar">
+            <button id="refreshLPEventsBtn" class="btn btn-secondary">Refresh</button>
+            <button id="checkThresholdsBtn" class="btn btn-danger">Check Alerts</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Unresolved Events</div><div class="stat-value" id="lpUnresolved">0</div></div>
+            <div class="stat-card"><div class="stat-label">Today's Voids</div><div class="stat-value" id="lpTodayVoids">0</div></div>
+            <div class="stat-card"><div class="stat-label">Today's Refunds</div><div class="stat-value" id="lpTodayRefunds">0</div></div>
+            <div class="stat-card"><div class="stat-label">Flagged Amount</div><div class="stat-value" id="lpFlaggedAmount">$0.00</div></div>
+          </div>
+          <div id="lpAlerts" class="table-container" style="display:none">
+            <h3>Active Alerts</h3>
+            <div id="lpAlertsContent"></div>
+          </div>
+          <div class="tabs">
+            <button class="tab-btn active" onclick="showLPTab('events')">Events</button>
+            <button class="tab-btn" onclick="showLPTab('cashieraudit')">Cashier Audit</button>
+          </div>
+          <div id="lpTab-events" class="lp-tab active">
+            <table id="lpEventsTable" class="data-table"><thead><tr><th>Date</th><th>Type</th><th>Severity</th><th>Cashier</th><th>Register</th><th>Amount</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="lpTab-cashieraudit" class="lp-tab" style="display:none">
+            <table id="cashierAuditTable" class="data-table"><thead><tr><th>Cashier</th><th>Events</th><th>Voids</th><th>Deletions</th><th>Large Sales</th><th>No Sales</th><th>Refunds</th><th>Discounts</th><th>Flagged $</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Extra Reports View -->
+        <div id="view-extrareports" class="view">
+          <h2>Additional Reports</h2>
+          <div class="tabs">
+            <button class="tab-btn active" onclick="showReportTab('vendor')">Vendor Sales</button>
+            <button class="tab-btn" onclick="showReportTab('category')">Category Sales</button>
+            <button class="tab-btn" onclick="showReportTab('manufacturer')">Manufacturer</button>
+            <button class="tab-btn" onclick="showReportTab('deptanalysis')">Dept Analysis</button>
+            <button class="tab-btn" onclick="showReportTab('pricelog')">Price Change Log</button>
+            <button class="tab-btn" onclick="showReportTab('fuelrecon')">Fuel Reconciliation</button>
+            <button class="tab-btn" onclick="showReportTab('fuelmargin')">Fuel Margin</button>
+          </div>
+          <div class="date-range">
+            <label>From:</label><input type="date" id="extraStartDate" class="date-input">
+            <label>To:</label><input type="date" id="extraEndDate" class="date-input">
+            <button id="loadExtraReport" class="btn btn-primary">Load Report</button>
+          </div>
+          <div id="reportTab-vendor" class="report-tab active">
+            <table id="vendorSalesTable" class="data-table"><thead><tr><th>Vendor</th><th>Items</th><th>Qty</th><th>Sales</th><th>Transactions</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="reportTab-category" class="report-tab" style="display:none">
+            <table id="categorySalesTable" class="data-table"><thead><tr><th>Category</th><th>Items</th><th>Qty</th><th>Sales</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="reportTab-manufacturer" class="report-tab" style="display:none">
+            <table id="mfrSalesTable" class="data-table"><thead><tr><th>Manufacturer</th><th>Items</th><th>Qty</th><th>Sales</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="reportTab-deptanalysis" class="report-tab" style="display:none">
+            <table id="deptAnalysisTable" class="data-table"><thead><tr><th>Department</th><th>Category</th><th>Items</th><th>Qty</th><th>Sales</th><th>Avg Price</th><th>Promos</th><th>Txns</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="reportTab-pricelog" class="report-tab" style="display:none">
+            <table id="priceChangeLogTable" class="data-table"><thead><tr><th>Date</th><th>UPC</th><th>Name</th><th>Dept</th><th>Old Price</th><th>New Price</th><th>Type</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="reportTab-fuelrecon" class="report-tab" style="display:none">
+            <table id="fuelReconTable" class="data-table"><thead><tr><th>Grade</th><th>Sold Gal</th><th>Sold $</th><th>Avg Sell</th><th>Delivered Gal</th><th>Delivered $</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="reportTab-fuelmargin" class="report-tab" style="display:none">
+            <table id="fuelMarginTable" class="data-table"><thead><tr><th>Grade</th><th>Gallons</th><th>Sales</th><th>Avg Sell</th><th>Avg Cost</th><th>Margin/Gal</th><th>Margin %</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- EDI View -->
+        <div id="view-edi" class="view">
+          <h2>Electronic Data Interface (EDI)</h2>
+          <div class="toolbar">
+            <button id="createEdiDocBtn" class="btn btn-primary">+ Create EDI Document</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="ediPending">0</div></div>
+            <div class="stat-card"><div class="stat-label">Sent</div><div class="stat-value" id="ediSent">0</div></div>
+            <div class="stat-card"><div class="stat-label">ACKs Received</div><div class="stat-value" id="ediAcks">0</div></div>
+          </div>
+          <div class="table-container">
+            <table id="ediDocsTable" class="data-table"><thead><tr><th>Date</th><th>Doc #</th><th>Type</th><th>Direction</th><th>Supplier</th><th>Status</th><th>ACK</th><th>Actions</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <!-- Tax Rates View -->
+        <div id="view-taxrates" class="view">
+          <h2>Tax Rates Management</h2>
+          <div class="toolbar">
+            <button id="addTaxRateBtn" class="btn btn-primary">+ New Tax Rate</button>
+            <button id="reassignTaxBtn" class="btn btn-secondary">Reassign by Department</button>
+          </div>
+          <div class="table-container">
+            <table id="taxRatesTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Rate (%)</th>
+                  <th>Status</th>
+                  <th>Items Using</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Accounting View -->
+        <div id="view-accounting" class="view">
+          <h2>Accounting / QuickBooks Integration</h2>
+          <div class="toolbar">
+            <button id="generateJournalBtn" class="btn btn-primary">Generate Daily Journal Entries</button>
+            <button id="exportJournalBtn" class="btn btn-secondary">Export to QuickBooks</button>
+          </div>
+          <div class="table-container">
+            <h3>Journal Entries</h3>
+            <div class="date-range">
+              <label>From:</label><input type="date" id="jeStartDate" class="date-input">
+              <label>To:</label><input type="date" id="jeEndDate" class="date-input">
+              <button id="loadJournalBtn" class="btn btn-primary">Load</button>
+            </div>
+            <table id="journalTable" class="data-table"><thead><tr><th>Date</th><th>Entry #</th><th>Description</th><th>Debit Account</th><th>Credit Account</th><th>Amount</th><th>Exported</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Edit Item Modal -->
+  <div id="editItemModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="editItemModalTitle">Edit Item</h3>
+        <button class="modal-close" onclick="closeEditItemModal()">&times;</button>
+      </div>
+      <form id="editItemForm">
+        <input type="hidden" id="editItemId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>UPC *</label>
+            <input type="text" id="editItemUpc" required>
+          </div>
+          <div class="form-group">
+            <label>Item Name *</label>
+            <input type="text" id="editItemName" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department</label>
+            <select id="editItemDept"></select>
+          </div>
+          <div class="form-group">
+            <label>Vendor</label>
+            <input type="text" id="editItemVendor">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cost ($)</label>
+            <input type="number" id="editItemCost" step="0.0001" min="0">
+          </div>
+          <div class="form-group">
+            <label>Price ($)</label>
+            <input type="number" id="editItemPrice" step="0.0001" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tax Rate</label>
+            <select id="editItemTaxRate"></select>
+          </div>
+          <div class="form-group">
+            <label>Age Restriction</label>
+            <select id="editItemAgeRestriction">
+              <option value="">None</option>
+              <option value="18">Must be 18+</option>
+              <option value="21">Must be 21+</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select id="editItemActive">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+          <div class="form-group" style="text-align:right; padding-top:24px;">
+            <span id="editItemMargin" style="font-size:14px; color:#6b7280;">Margin: --</span>
+          </div>
+        </div>
+        <div class="form-actions">
+          <div id="editItemError" class="import-status" style="display:none; color:#dc2626; margin-bottom:8px;"></div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="button" class="btn btn-danger" onclick="deleteEditItem()" id="editItemDeleteBtn" style="display:none">Delete Item</button>
+          <button type="button" class="btn btn-secondary" onclick="closeEditItemModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tax Rate Modal -->
+  <div id="taxRateModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="taxRateModalTitle">New Tax Rate</h3>
+        <button class="modal-close" onclick="closeTaxRateModal()">&times;</button>
+      </div>
+      <form id="taxRateForm">
+        <input type="hidden" id="taxRateId">
+        <div class="form-group">
+          <label>Rate Name *</label>
+          <input type="text" id="taxRateName" placeholder="e.g. State Tax" required>
+        </div>
+        <div class="form-group">
+          <label>Rate (%) *</label>
+          <input type="number" id="taxRateValue" step="0.01" min="0" max="100" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-danger" onclick="deleteTaxRate()" id="taxRateDeleteBtn" style="display:none">Delete</button>
+          <button type="button" class="btn btn-secondary" onclick="closeTaxRateModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Employee Modal -->
+  <div id="employeeModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="employeeModalTitle">Add Employee</h3>
+        <button class="modal-close" onclick="closeEmployeeModal()">&times;</button>
+      </div>
+      <form id="employeeForm">
+        <input type="hidden" id="employeeId">
+        <div class="form-group">
+          <label>Employee ID</label>
+          <input type="text" id="empId" required>
+        </div>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="empName" required>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="empRole">
+            <option value="cashier">Cashier</option>
+            <option value="attendant">Attendant</option>
+            <option value="manager">Manager</option>
+            <option value="owner">Owner</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hourly Rate</label>
+          <input type="number" id="empRate" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Hire Date</label>
+          <input type="date" id="empHireDate">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Group Modal -->
+  <div id="groupModal" class="modal" style="display:none">
+    <div class="modal-content" style="max-width:700px;">
+      <div class="modal-header">
+        <h3 id="groupModalTitle">Create Group</h3>
+        <button class="modal-close" onclick="closeGroupModal()">&times;</button>
+      </div>
+      <form id="groupForm">
+        <input type="hidden" id="groupId">
+        <div class="form-row">
+          <div class="form-group" style="flex:2"><label>Group Name</label><input type="text" id="groupName" required></div>
+          <div class="form-group" style="flex:3"><label>Description</label><input type="text" id="groupDescription"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Condition Type</label>
+            <select id="groupConditionType">
+              <option value="manual">Manual Selection</option>
+              <option value="department">By Department</option>
+              <option value="brand">By Brand</option>
+              <option value="price_min">Minimum Price</option>
+              <option value="price_max">Maximum Price</option>
+              <option value="upc_prefix">UPC Prefix</option>
+              <option value="vendor">Vendor</option>
+              <option value="name_contains">Name Contains</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Condition Value</label><input type="text" id="groupConditionValue" placeholder="Leave empty for manual"></div>
+        </div>
+        <div id="groupItemSearch" style="background:#f9fafb; padding:12px; border-radius:6px; margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:6px;">Search & Add Items</label>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:6px; margin-bottom:8px;">
+            <input type="text" id="groupItemSearchInput" placeholder="Name or UPC" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+            <select id="groupItemSearchDept" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;"><option value="">All Depts</option></select>
+            <select id="groupItemSearchTax" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;"><option value="">All Tax</option></select>
+            <input type="number" id="groupItemSearchMinPrice" placeholder="Min Price" step="0.01" min="0" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+            <input type="number" id="groupItemSearchMaxPrice" placeholder="Max Price" step="0.01" min="0" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+            <select id="groupItemSearchAge" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              <option value="">All Age</option><option value="">None</option><option value="18">18+</option><option value="21">21+</option>
+            </select>
+          </div>
+          <button type="button" id="groupItemSearchBtn" class="btn btn-sm btn-primary" style="margin-bottom:8px;">Search</button>
+          <div id="groupItemResults" style="max-height:150px; overflow-y:auto; font-size:13px;"></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:600;">Selected Items (<span id="groupSelectedCount">0</span>)</label>
+          <div id="groupSelectedItems" style="max-height:100px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; padding:4px; font-size:13px;"></div>
+        </div>
+        <input type="hidden" id="groupSelectedIds">
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeGroupModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tank Reading Modal -->
+  <div id="tankReadingModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Tank Reading</h3>
+        <button class="modal-close" onclick="closeTankReadingModal()">&times;</button>
+      </div>
+      <form id="tankReadingForm">
+        <div class="form-group">
+          <label>Tank ID</label>
+          <input type="text" id="tankId" required>
+        </div>
+        <div class="form-group">
+          <label>Fuel Grade</label>
+          <select id="fuelGrade">
+            <option value="REGULAR">Regular</option>
+            <option value="MIDGRADE">Midgrade</option>
+            <option value="PREMIUM">Premium</option>
+            <option value="DIESEL">Diesel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Reading Date</label>
+          <input type="date" id="readingDate" required>
+        </div>
+        <div class="form-group">
+          <label>Reading Time</label>
+          <input type="time" id="readingTime">
+        </div>
+        <div class="form-group">
+          <label>Current Level (gallons)</label>
+          <input type="number" id="currentLevel" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Tank Capacity (gallons)</label>
+          <input type="number" id="tankCapacity" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Temperature (F)</label>
+          <input type="number" id="temperature" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Water Level (inches)</label>
+          <input type="number" id="waterLevel" step="0.1">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeTankReadingModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Fuel Delivery Modal -->
+  <div id="fuelDeliveryModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Fuel Delivery</h3>
+        <button class="modal-close" onclick="closeFuelDeliveryModal()">&times;</button>
+      </div>
+      <form id="fuelDeliveryForm">
+        <div class="form-group">
+          <label>Delivery Date</label>
+          <input type="date" id="deliveryDate" required>
+        </div>
+        <div class="form-group">
+          <label>Delivery Time</label>
+          <input type="time" id="deliveryTime">
+        </div>
+        <div class="form-group">
+          <label>Fuel Grade</label>
+          <select id="deliveryGrade">
+            <option value="REGULAR">Regular</option>
+            <option value="MIDGRADE">Midgrade</option>
+            <option value="PREMIUM">Premium</option>
+            <option value="DIESEL">Diesel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Gallons Delivered</label>
+          <input type="number" id="gallonsDelivered" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Cost per Gallon</label>
+          <input type="number" id="costPerGallon" step="0.0001">
+        </div>
+        <div class="form-group">
+          <label>Total Cost</label>
+          <input type="number" id="totalCost" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Supplier</label>
+          <input type="text" id="supplier">
+        </div>
+        <div class="form-group">
+          <label>Invoice Number</label>
+          <input type="text" id="invoiceNumber">
+        </div>
+        <div class="form-group">
+          <label>Tank ID</label>
+          <input type="text" id="deliveryTankId">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeFuelDeliveryModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Combo/MixMatch Modal -->
+  <div id="promoModal" class="modal" style="display:none">
+    <div class="modal-content" style="max-width:700px;">
+      <div class="modal-header">
+        <h3 id="promoModalTitle">Create Promotion</h3>
+        <button class="modal-close" onclick="closePromoModal()">&times;</button>
+      </div>
+      <form id="promoForm">
+        <input type="hidden" id="promoType">
+        <input type="hidden" id="promoId">
+        <div class="form-group"><label>Promotion Name</label><input type="text" id="promoName" required></div>
+        <div class="form-row">
+          <div class="form-group" id="comboPriceGroup"><label>Combo Price ($)</label><input type="number" id="comboPrice" step="0.01" min="0"></div>
+          <div class="form-group" id="mixMatchTypeGroup" style="display:none"><label>Mix & Match Type</label><select id="mixMatchType"><option value="BuyXGetY">Buy X Get Y</option><option value="VolumeDiscount">Volume Discount</option><option value="BundlePrice">Bundle Price</option></select></div>
+          <div class="form-group" id="requiredQtyGroup" style="display:none"><label>Required Quantity</label><input type="number" id="requiredQty" value="2" min="1"></div>
+          <div class="form-group" id="discountGroup" style="display:none"><label>Discount Amount ($)</label><input type="number" id="discountAmount" step="0.01" min="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Valid From</label><input type="date" id="promoStartDate"></div>
+          <div class="form-group"><label>Valid To</label><input type="date" id="promoEndDate"></div>
+        </div>
+        <div style="background:#f9fafb; padding:12px; border-radius:6px; margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:600; display:block; margin-bottom:6px;">Search & Add Items</label>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:6px; margin-bottom:8px;">
+            <input type="text" id="promoItemSearchInput" placeholder="Name or UPC" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+            <select id="promoItemSearchDept" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;"><option value="">All Depts</option></select>
+            <select id="promoItemSearchTax" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;"><option value="">All Tax</option></select>
+            <input type="number" id="promoItemSearchMinPrice" placeholder="Min Price" step="0.01" min="0" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+            <input type="number" id="promoItemSearchMaxPrice" placeholder="Max Price" step="0.01" min="0" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+            <select id="promoItemSearchAge" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              <option value="">All Age</option><option value="">None</option><option value="18">18+</option><option value="21">21+</option>
+            </select>
+          </div>
+          <button type="button" id="promoItemSearchBtn" class="btn btn-sm btn-primary" style="margin-bottom:8px;">Search</button>
+          <div id="promoItemResults" style="max-height:150px; overflow-y:auto; font-size:13px;"></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:600;">Selected Items (<span id="promoSelectedCount">0</span>)</label>
+          <div id="promoSelectedItems" style="max-height:100px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; padding:4px; font-size:13px;"></div>
+        </div>
+        <input type="hidden" id="promoSelectedUpcs">
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closePromoModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cash Movement Modal -->
+  <div id="cashMovementModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Cash Movement</h3><button class="modal-close" onclick="closeCashMovementModal()">&times;</button></div>
+      <form id="cashMovementForm">
+        <div class="form-group"><label>Date</label><input type="date" id="cmDate" required></div>
+        <div class="form-group"><label>Type</label><select id="cmType"><option value="paid_in">Paid In</option><option value="paid_out">Paid Out</option><option value="safe_drop">Safe Drop</option><option value="deposit">Deposit</option><option value="overage">Overage</option><option value="shortage">Shortage</option></select></div>
+        <div class="form-group"><label>Amount ($)</label><input type="number" id="cmAmount" step="0.01" min="0" required></div>
+        <div class="form-group"><label>Reason</label><input type="text" id="cmReason"></div>
+        <div class="form-group"><label>Register ID</label><input type="text" id="cmRegister"></div>
+        <div class="form-group"><label>Cashier ID</label><input type="text" id="cmCashier"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closeCashMovementModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment Handover Modal -->
+  <div id="handoverModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Payment Handover</h3><button class="modal-close" onclick="closeHandoverModal()">&times;</button></div>
+      <form id="handoverForm">
+        <div class="form-group"><label>Date</label><input type="date" id="hoDate" required></div>
+        <div class="form-group"><label>From Cashier</label><input type="text" id="hoFrom" required></div>
+        <div class="form-group"><label>To Cashier</label><input type="text" id="hoTo" required></div>
+        <div class="form-group"><label>Register ID</label><input type="text" id="hoRegister"></div>
+        <div class="form-group"><label>Till ID</label><input type="text" id="hoTill"></div>
+        <div class="form-group"><label>Cash Amount ($)</label><input type="number" id="hoCash" step="0.01" min="0"></div>
+        <div class="form-group"><label>Card Amount ($)</label><input type="number" id="hoCard" step="0.01" min="0"></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="hoNotes"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closeHandoverModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Supplier Modal -->
+  <div id="supplierModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="supplierModalTitle">Add Supplier</h3><button class="modal-close" onclick="closeSupplierModal()">&times;</button></div>
+      <form id="supplierForm">
+        <input type="hidden" id="supplierId">
+        <div class="form-group"><label>Supplier ID</label><input type="text" id="supSupplierId" required></div>
+        <div class="form-group"><label>Name</label><input type="text" id="supName" required></div>
+        <div class="form-group"><label>Contact Name</label><input type="text" id="supContact"></div>
+        <div class="form-group"><label>Phone</label><input type="text" id="supPhone"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="supEmail"></div>
+        <div class="form-group"><label>Address</label><input type="text" id="supAddress"></div>
+        <div class="form-group"><label>Lead Time (days)</label><input type="number" id="supLeadTime" value="7"></div>
+        <div class="form-group"><label>Payment Terms (days)</label><input type="number" id="supTerms" value="30"></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="supNotes"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closeSupplierModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PO Modal -->
+  <div id="poModal" class="modal" style="display:none">
+    <div class="modal-content" style="max-width:600px">
+      <div class="modal-header"><h3>Create Purchase Order</h3><button class="modal-close" onclick="closePOModal()">&times;</button></div>
+      <form id="poForm">
+        <div class="form-group"><label>Supplier</label><select id="poSupplier" required></select></div>
+        <div class="form-group"><label>Order Date</label><input type="date" id="poOrderDate" required></div>
+        <div class="form-group"><label>Expected Date</label><input type="date" id="poExpectedDate"></div>
+        <div class="form-group"><label>Items (one per line: UPC,qty,cost)</label><textarea id="poItems" rows="6" placeholder="123456789012,10,1.50"></textarea></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="poNotes"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Create</button><button type="button" class="btn btn-secondary" onclick="closePOModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Customer Modal -->
+  <div id="customerModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="customerModalTitle">Add Customer</h3><button class="modal-close" onclick="closeCustomerModal()">&times;</button></div>
+      <form id="customerForm">
+        <input type="hidden" id="custId">
+        <div class="form-group"><label>Customer ID</label><input type="text" id="custCustomerId" required></div>
+        <div class="form-group"><label>Name</label><input type="text" id="custName" required></div>
+        <div class="form-group"><label>Phone</label><input type="text" id="custPhone"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="custEmail"></div>
+        <div class="form-group"><label>Address</label><input type="text" id="custAddress"></div>
+        <div class="form-group"><label>Credit Limit ($)</label><input type="number" id="custCreditLimit" step="0.01" min="0" value="0"></div>
+        <div class="form-group"><label>Payment Terms (days)</label><input type="number" id="custTerms" value="30"></div>
+        <div class="form-group"><label>Discount %</label><input type="number" id="custDiscount" step="0.1" min="0" max="100" value="0"></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="custNotes"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closeCustomerModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Invoice Modal -->
+  <div id="invoiceModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Create Invoice</h3><button class="modal-close" onclick="closeInvoiceModal()">&times;</button></div>
+      <form id="invoiceForm">
+        <div class="form-group"><label>Customer</label><select id="invCustomer" required></select></div>
+        <div class="form-group"><label>Invoice Date</label><input type="date" id="invDate" required></div>
+        <div class="form-group"><label>Due Date</label><input type="date" id="invDueDate"></div>
+        <div class="form-group"><label>Subtotal ($)</label><input type="number" id="invSubtotal" step="0.01" min="0" required></div>
+        <div class="form-group"><label>Tax ($)</label><input type="number" id="invTax" step="0.01" min="0" value="0"></div>
+        <div class="form-group"><label>Discount ($)</label><input type="number" id="invDiscount" step="0.01" min="0" value="0"></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="invNotes"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Create</button><button type="button" class="btn btn-secondary" onclick="closeInvoiceModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Customer Payment Modal -->
+  <div id="custPaymentModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Record Customer Payment</h3><button class="modal-close" onclick="closeCustPaymentModal()">&times;</button></div>
+      <form id="custPaymentForm">
+        <div class="form-group"><label>Customer</label><select id="cpCustomer" required></select></div>
+        <div class="form-group"><label>Invoice (optional)</label><select id="cpInvoice"><option value="">Select invoice...</option></select></div>
+        <div class="form-group"><label>Payment Date</label><input type="date" id="cpDate" required></div>
+        <div class="form-group"><label>Amount ($)</label><input type="number" id="cpAmount" step="0.01" min="0" required></div>
+        <div class="form-group"><label>Method</label><select id="cpMethod"><option value="cash">Cash</option><option value="check">Check</option><option value="card">Card</option><option value="ach">ACH</option></select></div>
+        <div class="form-group"><label>Reference #</label><input type="text" id="cpReference"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closeCustPaymentModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Stock Movement Modal -->
+  <div id="stockMovementModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Stock Movement</h3><button class="modal-close" onclick="closeStockMovementModal()">&times;</button></div>
+      <form id="stockMovementForm">
+        <div class="form-group"><label>Date</label><input type="date" id="stkDate" required></div>
+        <div class="form-group"><label>Type</label><select id="stkType"><option value="receive">Receive</option><option value="sale">Sale</option><option value="return_in">Return In</option><option value="return_out">Return Out</option><option value="transfer">Transfer</option><option value="adjustment_up">Adjustment Up</option><option value="adjustment_down">Adjustment Down</option><option value="damage">Damage</option><option value="shrink">Shrink</option><option value="expire">Expire</option></select></div>
+        <div class="form-group"><label>Item (UPC or Name)</label><input type="text" id="stkItem" required></div>
+        <div class="form-group"><label>Quantity</label><input type="number" id="stkQuantity" step="0.01" required></div>
+        <div class="form-group"><label>Unit Cost ($)</label><input type="number" id="stkCost" step="0.01" min="0"></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="stkNotes"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closeStockMovementModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lottery Sale Modal -->
+  <div id="lotterySaleModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Record Lottery Sale</h3><button class="modal-close" onclick="closeLotterySaleModal()">&times;</button></div>
+      <form id="lotterySaleForm">
+        <div class="form-group"><label>Date</label><input type="date" id="lsDate" required></div>
+        <div class="form-group"><label>Game Name</label><input type="text" id="lsGame" required></div>
+        <div class="form-group"><label>Ticket Number</label><input type="text" id="lsTicket"></div>
+        <div class="form-group"><label>Sale Amount ($)</label><input type="number" id="lsSaleAmount" step="0.01" min="0"></div>
+        <div class="form-group"><label>Payout Amount ($)</label><input type="number" id="lsPayoutAmount" step="0.01" min="0" value="0"></div>
+        <div class="form-group"><label>Commission ($)</label><input type="number" id="lsCommission" step="0.01" min="0" value="0"></div>
+        <div class="form-group"><label>Register ID</label><input type="text" id="lsRegister"></div>
+        <div class="form-group"><label>Cashier ID</label><input type="text" id="lsCashier"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closeLotterySaleModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lottery Recon Modal -->
+  <div id="lotteryReconModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Lottery Reconciliation</h3><button class="modal-close" onclick="closeLotteryReconModal()">&times;</button></div>
+      <form id="lotteryReconForm">
+        <div class="form-group"><label>Date</label><input type="date" id="lrDate" required></div>
+        <div class="form-group"><label>Game Name</label><input type="text" id="lrGame" required></div>
+        <div class="form-group"><label>Beginning Inventory</label><input type="number" id="lrBegInv" min="0" value="0"></div>
+        <div class="form-group"><label>Tickets Received</label><input type="number" id="lrReceived" min="0" value="0"></div>
+        <div class="form-group"><label>Tickets Sold</label><input type="number" id="lrSold" min="0" value="0"></div>
+        <div class="form-group"><label>Tickets Returned</label><input type="number" id="lrReturned" min="0" value="0"></div>
+        <div class="form-group"><label>Ending Inventory</label><input type="number" id="lrEndInv" min="0" value="0"></div>
+        <div class="form-group"><label>Total Sales ($)</label><input type="number" id="lrSales" step="0.01" min="0" value="0"></div>
+        <div class="form-group"><label>Total Payouts ($)</label><input type="number" id="lrPayouts" step="0.01" min="0" value="0"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="closeLotteryReconModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scheduled Price Modal -->
+  <div id="scheduledPriceModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Schedule Price Change</h3><button class="modal-close" onclick="closeScheduledPriceModal()">&times;</button></div>
+      <form id="scheduledPriceForm">
+        <div class="form-group"><label>Item (UPC or Name)</label><input type="text" id="spItem" required></div>
+        <div class="form-group"><label>New Price ($)</label><input type="number" id="spNewPrice" step="0.01" min="0" required></div>
+        <div class="form-group"><label>Effective Date</label><input type="date" id="spEffDate" required></div>
+        <div class="form-group"><label>Effective Time</label><input type="time" id="spEffTime" value="00:00"></div>
+        <div class="form-group"><label>Expiration Date</label><input type="date" id="spExpDate"></div>
+        <div class="form-group"><label>Expiration Time</label><input type="time" id="spExpTime" value="23:59"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Schedule</button><button type="button" class="btn btn-secondary" onclick="closeScheduledPriceModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDI Document Modal -->
+  <div id="ediDocModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Create EDI Document</h3><button class="modal-close" onclick="closeEdiDocModal()">&times;</button></div>
+      <form id="ediDocForm">
+        <div class="form-group"><label>Document Type</label><select id="ediDocType"><option value="PO">Purchase Order (850)</option><option value="POA">PO Acknowledgment (855)</option><option value="ASN">Advance Ship Notice (856)</option><option value="INV">Invoice (810)</option><option value="CAT">Catalog (832)</option></select></div>
+        <div class="form-group"><label>Direction</label><select id="ediDirection"><option value="outbound">Outbound</option><option value="inbound">Inbound</option></select></div>
+        <div class="form-group"><label>Supplier</label><select id="ediSupplier"></select></div>
+        <div class="form-group"><label>Data (JSON)</label><textarea id="ediData" rows="4"></textarea></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Create</button><button type="button" class="btn btn-secondary" onclick="closeEdiDocModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Close Daily Book Modal -->
+  <div id="closeBookModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Close Daily Book</h3><button class="modal-close" onclick="closeBookModal()">&times;</button></div>
+      <form id="closeBookForm">
+        <div class="form-group"><label>Closing Cash in Drawer ($)</label><input type="number" id="closingCash" step="0.01" min="0" required></div>
+        <div class="form-group"><label>Closed By</label><input type="text" id="closedBy" required></div>
+        <div class="form-actions"><button type="submit" class="btn btn-danger">Close Day</button><button type="button" class="btn btn-secondary" onclick="closeBookModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Receive PO Modal -->
+  <div id="receivePOModal" class="modal" style="display:none">
+    <div class="modal-content" style="max-width:600px">
+      <div class="modal-header"><h3>Receive Purchase Order</h3><button class="modal-close" onclick="closeReceivePOModal()">&times;</button></div>
+      <form id="receivePOForm">
+        <div class="form-group"><label>Select PO</label><select id="recvPOSelect" required></select></div>
+        <div class="form-group"><label>Received By</label><input type="text" id="recvBy" required></div>
+        <div id="recvPOItems"></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Receive</button><button type="button" class="btn btn-secondary" onclick="closeReceivePOModal()">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Item Picker Modal -->
+  <div id="itemPickerModal" class="modal" style="display:none">
+    <div class="modal-content" style="max-width:640px">
+      <div class="modal-header">
+        <h3>Select Item</h3>
+        <button class="modal-close" onclick="closeItemPicker()">&times;</button>
+      </div>
+      <div style="padding:16px 20px 0">
+        <div class="item-picker-search">
+          <input type="text" id="itemPickerSearch" placeholder="Search by UPC, name, or description..." autofocus>
+          <div id="itemPickerResults" class="item-picker-results"></div>
+        </div>
+        <div id="itemPickerSelected" class="item-picker-selected" style="display:none">
+          <div class="item-picker-selected-info">
+            <strong id="itemPickerSelName"></strong>
+            <span id="itemPickerSelUpc" class="item-picker-sel-upc"></span>
+            <span id="itemPickerSelDept" class="item-picker-sel-dept"></span>
+          </div>
+          <div class="item-picker-selected-prices">
+            <span id="itemPickerSelPrice"></span>
+            <span id="itemPickerSelCost"></span>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:12px; padding:0">
+          <button type="button" class="btn btn-primary" id="itemPickerConfirmBtn" disabled onclick="confirmItemPicker()">Select</button>
+          <button type="button" class="btn btn-secondary" onclick="closeItemPicker()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
