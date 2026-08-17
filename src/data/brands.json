@@ -1,0 +1,47 @@
+{
+  "beverages": [
+    { "name": "Coca-Cola", "upc_prefixes": ["00490000", "00120000"], "category": "beverages" },
+    { "name": "Pepsi", "upc_prefixes": ["001200006", "00280000"], "category": "beverages" },
+    { "name": "Dr Pepper", "upc_prefixes": ["00211301"], "category": "beverages" },
+    { "name": "Monster", "upc_prefixes": ["00708470"], "category": "beverages" },
+    { "name": "Red Bull", "upc_prefixes": ["00900220"], "category": "beverages" },
+    { "name": "Gatorade", "upc_prefixes": ["00520000"], "category": "beverages" },
+    { "name": "Dasani", "upc_prefixes": ["004900004"], "category": "beverages" },
+    { "name": "Aquafina", "upc_prefixes": ["001200009"], "category": "beverages" },
+    { "name": "Sprite", "upc_prefixes": ["004900002"], "category": "beverages" },
+    { "name": "Mountain Dew", "upc_prefixes": ["001200002"], "category": "beverages" }
+  ],
+  "snacks": [
+    { "name": "Frito-Lay", "upc_prefixes": ["00284003"], "category": "snacks" },
+    { "name": "Lay's", "upc_prefixes": ["002840031"], "category": "snacks" },
+    { "name": "Doritos", "upc_prefixes": ["002840032"], "category": "snacks" },
+    { "name": "Cheetos", "upc_prefixes": ["002840034"], "category": "snacks" },
+    { "name": "Fritos", "upc_prefixes": ["002840035"], "category": "snacks" },
+    { "name": "Tostitos", "upc_prefixes": ["002840036"], "category": "snacks" },
+    { "name": "Hostess", "upc_prefixes": ["00111900"], "category": "snacks" },
+    { "name": "Little Debbie", "upc_prefixes": ["00116001"], "category": "snacks" }
+  ],
+  "cigarettes": [
+    { "name": "Marlboro", "upc_prefixes": ["00272000"], "category": "cigarettes" },
+    { "name": "Camel", "upc_prefixes": ["00360000"], "category": "cigarettes" },
+    { "name": "Newport", "upc_prefixes": ["00340000"], "category": "cigarettes" },
+    { "name": "Winston", "upc_prefixes": ["003600004"], "category": "cigarettes" },
+    { "name": "American Spirit", "upc_prefixes": ["00560000"], "category": "cigarettes" }
+  ],
+  "beer": [
+    { "name": "Budweiser", "upc_prefixes": ["00717000"], "category": "beer" },
+    { "name": "Bud Light", "upc_prefixes": ["007170003"], "category": "beer" },
+    { "name": "Coors", "upc_prefixes": ["0012000020"], "category": "beer" },
+    { "name": "Miller", "upc_prefixes": ["00430000"], "category": "beer" },
+    { "name": "Heineken", "upc_prefixes": ["00747800"], "category": "beer" },
+    { "name": "Corona", "upc_prefixes": ["00709700"], "category": "beer" }
+  ],
+  "dairy": [
+    { "name": "Dean's", "upc_prefixes": ["00419000"], "category": "dairy" },
+    { "name": "Land O'Lakes", "upc_prefixes": ["00365000"], "category": "dairy" }
+  ],
+  "general": [
+    { "name": "Procter & Gamble", "upc_prefixes": ["00370000"], "category": "general" },
+    { "name": "Unilever", "upc_prefixes": ["00794000"], "category": "general" }
+  ]
+}
