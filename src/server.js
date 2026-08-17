@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const multer = require('multer');
 
 const app = express();
@@ -13,6 +14,57 @@ const dataDir = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const uploadDir = process.env.UPLOAD_DIR || path.join(dataDir, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 const upload = multer({ dest: uploadDir });
+
+// --- Authentication & Session Security ---
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'passport2026!';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'bos-passport-session-secret-2026';
+
+function signToken(username) {
+  const exp = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 days
+  const payload = `${username}|${exp}`;
+  const hmac = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  return `${payload}|${hmac}`;
+}
+
+function verifyToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('|');
+  if (parts.length !== 3) return null;
+  const [username, expStr, sig] = parts;
+  const exp = parseInt(expStr, 10);
+  if (isNaN(exp) || Date.now() > exp) return null;
+  const payload = `${username}|${expStr}`;
+  const expectedSig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  try {
+    if (crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expectedSig, 'hex'))) {
+      return { username, exp };
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
+function parseCookies(req) {
+  const list = {};
+  const rc = req.headers.cookie;
+  if (rc) {
+    rc.split(';').forEach(cookie => {
+      const parts = cookie.split('=');
+      if (parts.length >= 2) {
+        list[parts.shift().trim()] = decodeURIComponent(parts.join('='));
+      }
+    });
+  }
+  return list;
+}
+
+function getSessionUser(req) {
+  const cookies = parseCookies(req);
+  const token = cookies.bos_session || req.headers['x-session-token'];
+  return verifyToken(token);
+}
 
 // 1. Mock electron so we can require main.js without it crashing
 const handlers = {};
@@ -66,8 +118,39 @@ Module.prototype.require = function(id) {
 // 2. Require main.js to register all the ipcMain handlers
 require('./main.js');
 
-// 3. Define the IPC bridge endpoint
+// 3. Authentication Endpoints
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body || {};
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    const token = signToken(username);
+    res.setHeader('Set-Cookie', `bos_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+    console.log(`[Auth] User '${username}' logged in successfully`);
+    return res.json({ success: true, user: { username } });
+  }
+  console.warn(`[Auth] Failed login attempt for user '${username}'`);
+  return res.status(401).json({ error: 'Invalid username or password' });
+});
+
+app.post('/api/logout', (req, res) => {
+  res.setHeader('Set-Cookie', 'bos_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+  return res.json({ success: true });
+});
+
+app.get('/api/auth-status', (req, res) => {
+  const user = getSessionUser(req);
+  if (user) {
+    return res.json({ authenticated: true, user: { username: user.username } });
+  }
+  return res.json({ authenticated: false });
+});
+
+// 4. Define the Protected IPC bridge endpoint
 app.post('/api/ipc', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized. Please log in.' });
+  }
+
   const { channel, args = [] } = req.body;
   
   if (!handlers[channel]) {
@@ -85,13 +168,12 @@ app.post('/api/ipc', async (req, res) => {
   }
 });
 
-// 4. Endpoint for Local Agent to upload XML files
+// 5. Endpoint for Local Agent to upload XML files (API Key protected)
 const { importXmlFile } = require('./importers/xml_parser');
 app.post('/api/upload-xml', upload.single('xml_file'), async (req, res) => {
-  // Very basic API key protection (optional but recommended)
   const apiKey = req.headers['x-api-key'];
   if (process.env.API_KEY && apiKey !== process.env.API_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized API key' });
   }
 
   if (!req.file) {
@@ -119,9 +201,23 @@ app.post('/api/upload-xml', upload.single('xml_file'), async (req, res) => {
   }
 });
 
-// 5. Serve the Frontend Dashboard
+// 6. Serve the Frontend Dashboard & Login Pages
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'login.html'));
+});
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'login.html'));
+});
+
+// Static assets (CSS, JS, images, fonts)
 app.use(express.static(path.join(__dirname, 'views')));
+
+// Protected root view
 app.get('*', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.sendFile(path.join(__dirname, 'views', 'login.html'));
+  }
   res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
 });
 
@@ -130,4 +226,5 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
   console.log(`Dashboard available at http://localhost:${port}`);
+  console.log(`Admin user: ${ADMIN_USERNAME}`);
 });

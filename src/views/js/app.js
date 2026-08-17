@@ -6,6 +6,10 @@ const ipcRenderer = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ channel, args })
     });
+    if (res.status === 401) {
+      window.location.replace('/login.html');
+      throw new Error('Unauthorized');
+    }
     if (!res.ok) {
       const error = await res.json();
       throw new Error(error.error || 'IPC Error');
@@ -20,12 +24,34 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeApp();
 });
 
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/auth-status');
+    const data = await res.json();
+    if (!data.authenticated) {
+      window.location.replace('/login.html');
+    } else if (data.user && data.user.username) {
+      const label = document.getElementById('currentUserLabel');
+      if (label) label.textContent = data.user.username;
+    }
+  } catch (e) {}
+}
+
 function initializeApp() {
+  checkAuth();
   setupNavigation();
   setupDateControls();
   setupEventListeners();
   loadDashboard();
   loadDatesWithData();
+
+  const signOutBtn = document.getElementById('signOutBtn');
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', async () => {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.replace('/login.html');
+    });
+  }
 }
 
 function setupNavigation() {

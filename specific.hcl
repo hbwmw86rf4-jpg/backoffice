@@ -16,5 +16,8 @@ service "backoffice" {
     PORT = port
     DATA_DIR = volume.data.path
     DB_PATH = "${volume.data.path}/backoffice.db"
+    ADMIN_USERNAME = "admin"
+    ADMIN_PASSWORD = "passport2026!"
+    SESSION_SECRET = "bos-session-secret-salt-2026"
   }
 }
