@@ -2,7 +2,7 @@ const Database = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', '..', 'data', 'backoffice.db');
+const DB_PATH = process.env.DB_PATH || (process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'backoffice.db') : path.join(__dirname, '..', '..', 'data', 'backoffice.db'));
 let db = null;
 
 function getDb() {
@@ -11,6 +11,20 @@ function getDb() {
   const dir = path.dirname(DB_PATH);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
+  }
+
+  // If destination database does not exist, seed it from packaged seed.db
+  if (!fs.existsSync(DB_PATH)) {
+    const seedPath = path.join(__dirname, '..', 'data', 'seed.db');
+    if (fs.existsSync(seedPath)) {
+      console.log(`[DB] Seeding initial database from ${seedPath} to ${DB_PATH}...`);
+      try {
+        fs.copyFileSync(seedPath, DB_PATH);
+        console.log(`[DB] Successfully initialized database at ${DB_PATH}`);
+      } catch (err) {
+        console.error(`[DB] Failed to seed database:`, err.message);
+      }
+    }
   }
 
   db = new Database(DB_PATH);

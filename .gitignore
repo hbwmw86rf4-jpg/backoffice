@@ -12,6 +12,7 @@ yarn-error.log*
 *.sqlite
 *.sqlite3
 *.db
+!src/data/seed.db
 *.db-journal
 *.db-wal
 *.db-shm
