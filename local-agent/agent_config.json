@@ -1,0 +1,10 @@
+{
+  "endpoint": "https://backoffice-fancy-oyster-2gt.spcf.app",
+  "apiKey": "YOUR_API_KEY_HERE",
+  "watchDirs": [
+    "\\\\10.5.48.2\\XMLGateway\\BOOutBox",
+    "\\\\10.5.48.2\\XMLGateway\\FuelPriceManagement\\BOOutBox",
+    "C:\\Passport\\BOOutbox",
+    "C:\\Passport\\FuelOutbox"
+  ]
+}
