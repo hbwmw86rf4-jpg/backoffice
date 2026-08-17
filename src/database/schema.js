@@ -788,6 +788,24 @@ function initializeDatabase() {
     console.log(`Auto-assigned tax rates to ${assigned} items based on department`);
   }
 
+  // Auto-import full pricebook from myReport-2.xls if pricebook is empty or small
+  try {
+    const pbCount = database.prepare('SELECT COUNT(*) as count FROM pricebook').get();
+    if (!pbCount || pbCount.count < 500) {
+      const defaultXls = path.join(__dirname, '..', '..', 'myReport-2.xls');
+      if (fs.existsSync(defaultXls)) {
+        const { importPricebook } = require('../importers/pricebook_import');
+        console.log('[DB] Auto-importing full pricebook from myReport-2.xls...');
+        importPricebook(defaultXls);
+        const { seedRetailGroups } = require('./seed_retail_groups');
+        console.log('[DB] Auto-seeding retail groups from imported pricebook...');
+        seedRetailGroups(database);
+      }
+    }
+  } catch (err) {
+    console.warn('[DB] Auto-import pricebook warning:', err.message);
+  }
+
   console.log('Database initialized successfully');
   } catch (e) {
     console.error('DATABASE INIT ERROR:', e.message);
