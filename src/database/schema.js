@@ -788,14 +788,17 @@ function initializeDatabase() {
     console.log(`Auto-assigned tax rates to ${assigned} items based on department`);
   }
 
-  // Auto-import full pricebook from myReport-2.xls if pricebook is empty or small
+  // Auto-import full pricebook from myReport-3.xls or myReport-2.xls if pricebook is empty or small
   try {
     const pbCount = database.prepare('SELECT COUNT(*) as count FROM pricebook').get();
-    if (!pbCount || pbCount.count < 500) {
-      const defaultXls = path.join(__dirname, '..', '..', 'myReport-2.xls');
+    if (!pbCount || pbCount.count < 3000) {
+      let defaultXls = path.join(__dirname, '..', '..', 'myReport-3.xls');
+      if (!fs.existsSync(defaultXls)) {
+        defaultXls = path.join(__dirname, '..', '..', 'myReport-2.xls');
+      }
       if (fs.existsSync(defaultXls)) {
         const { importPricebook } = require('../importers/pricebook_import');
-        console.log('[DB] Auto-importing full pricebook from myReport-2.xls...');
+        console.log(`[DB] Auto-importing full pricebook from ${path.basename(defaultXls)}...`);
         importPricebook(defaultXls);
         const { seedRetailGroups } = require('./seed_retail_groups');
         console.log('[DB] Auto-seeding retail groups from imported pricebook...');

@@ -345,18 +345,47 @@ ipcMain.handle('get-cstore-report', async (event, startDate, endDate) => {
 
   const byDepartment = db.prepare(`
     SELECT
-      COALESCE(d.name, 'Dept ' || ti.merchandise_code, 'Uncategorized') as department,
+      COALESCE(
+        d.name,
+        CASE CAST(ti.merchandise_code AS INTEGER)
+          WHEN 1 THEN 'Edible'
+          WHEN 2 THEN 'Non-Edible'
+          WHEN 3 THEN 'Snacks'
+          WHEN 4 THEN 'Fountain'
+          WHEN 5 THEN 'Cigs'
+          WHEN 6 THEN 'HBA'
+          WHEN 7 THEN 'Fountain'
+          WHEN 8 THEN 'Edible'
+          WHEN 9 THEN 'Soda'
+          WHEN 10 THEN 'Hot Food'
+          WHEN 11 THEN 'Deli'
+          WHEN 12 THEN 'Auto Parts'
+          WHEN 13 THEN 'Candy'
+          WHEN 14 THEN 'Instant Lottery'
+          WHEN 15 THEN 'Online Lottery'
+          WHEN 16 THEN 'Fountain'
+          WHEN 17 THEN 'Gas Card'
+          WHEN 18 THEN 'Edible'
+          WHEN 19 THEN 'HBA'
+          WHEN 20 THEN 'Vapes etc'
+          WHEN 21 THEN 'Snacks'
+          WHEN 23 THEN 'Edible'
+          WHEN 24 THEN 'Hot Food'
+          WHEN 25 THEN 'Beer'
+          ELSE 'Uncategorized'
+        END
+      ) as department,
       COUNT(DISTINCT ti.upc) as unique_items,
       COALESCE(SUM(ti.quantity), 0) as total_qty,
       COALESCE(SUM(ti.total_amount), 0) as total_sales
     FROM transaction_items ti
     JOIN transactions t ON ti.transaction_id = t.id
     LEFT JOIN pricebook pb ON ti.upc = pb.upc
-    LEFT JOIN departments d ON d.id = CAST(ti.merchandise_code AS INTEGER)
+    LEFT JOIN departments d ON pb.department_id = d.id
     WHERE t.business_date BETWEEN ? AND ?
       AND ti.item_type = 'cstore'
-      AND CAST(ti.merchandise_code AS INTEGER) NOT IN (14, 15, 17, 22, 23, 88888, 99994, 99998, 99999)
-    GROUP BY CAST(ti.merchandise_code AS INTEGER)
+      AND CAST(ti.merchandise_code AS INTEGER) NOT IN (14, 15, 88888, 99994, 99998, 99999)
+    GROUP BY department
     ORDER BY total_sales DESC
   `).all(start, end);
 

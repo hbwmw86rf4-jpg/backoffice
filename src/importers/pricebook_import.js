@@ -4,6 +4,7 @@ const { getDb, saveDb } = require('../database/schema');
 function normalizeUpc(upc) {
   if (!upc) return '00000000000';
   let str = String(upc).trim();
+  if (str.endsWith('.0')) str = str.slice(0, -2);
   if (str.length <= 11) {
     return str.padStart(11, '0');
   }
@@ -11,6 +12,14 @@ function normalizeUpc(upc) {
     return str.substring(1, 12);
   }
   return str;
+}
+
+function cleanFloat(val) {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return val;
+  const s = String(val).replace(/\u00a0/g, '').replace(/[$,]/g, '').trim();
+  const num = parseFloat(s);
+  return isNaN(num) ? 0 : num;
 }
 
 function importPricebook(filePath) {
@@ -24,14 +33,14 @@ function importPricebook(filePath) {
 
     let headerRow = -1;
     for (let i = 0; i < data.length; i++) {
-      if (data[i] && data[i][0] === 'Scan Code') {
+      if (data[i] && (data[i][0] === 'Scan Code' || data[i][0] === 'UPC')) {
         headerRow = i;
         break;
       }
     }
 
     if (headerRow === -1) {
-      console.log('Could not find header row (Scan Code)');
+      console.log('Could not find header row (Scan Code / UPC)');
       return { status: 'error', message: 'Header row not found' };
     }
 
@@ -45,6 +54,12 @@ function importPricebook(filePath) {
       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     `);
 
+    // Load existing departments into map
+    const existingDepts = db.prepare('SELECT id, name FROM departments').all();
+    for (const d of existingDepts) {
+      departments.set(d.name.trim(), d.id);
+    }
+
     const importAll = db.transaction(() => {
       for (let i = headerRow + 1; i < data.length; i++) {
         const row = data[i];
@@ -54,10 +69,10 @@ function importPricebook(filePath) {
         const name = String(row[1] || '').trim();
         const deptName = String(row[2] || '').trim();
         const vendor = String(row[3] || '').trim();
-        const cost = parseFloat(row[5]) || 0;
-        const price = parseFloat(row[6]) || 0;
+        const cost = cleanFloat(row[5]);
+        const price = cleanFloat(row[6]);
 
-        if (!upc || !name) continue;
+        if (!upc || !name || !deptName) continue;
 
         if (!departments.has(deptName)) {
           insertDept.run(deptName);
@@ -68,7 +83,6 @@ function importPricebook(filePath) {
         }
 
         const deptId = departments.get(deptName);
-
         upsertItem.run(upc, name, deptId, vendor, cost, price);
         importedCount++;
       }
@@ -88,4 +102,4 @@ function importPricebook(filePath) {
   }
 }
 
-module.exports = { importPricebook };
+module.exports = { importPricebook, normalizeUpc };
