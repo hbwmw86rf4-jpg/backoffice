@@ -1,5 +1,11 @@
 const { getDb, saveDb } = require('./schema');
-const brandsData = require('../data/brands.json');
+let brandsData = {};
+try {
+  brandsData = require('../data/brands.json');
+} catch (err) {
+  console.warn('Warning: Could not load brands.json, defaulting to empty dataset:', err.message);
+  brandsData = {};
+}
 
 function createGroup(group) {
   const db = getDb();
