@@ -1,4 +1,18 @@
-const { ipcRenderer } = require('electron');
+// Polyfill for browser environment
+const ipcRenderer = {
+  invoke: async (channel, ...args) => {
+    const res = await fetch('/api/ipc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel, args })
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'IPC Error');
+    }
+    return await res.json();
+  }
+};
 
 let currentDate = new Date().toLocaleDateString('en-CA');
 

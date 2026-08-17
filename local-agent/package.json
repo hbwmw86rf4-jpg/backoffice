@@ -1,0 +1,14 @@
+{
+  "name": "passport-local-agent",
+  "version": "1.0.0",
+  "description": "Uploads Passport XMLs to Cloud",
+  "main": "agent.js",
+  "scripts": {
+    "start": "node agent.js"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "form-data": "^4.0.0",
+    "node-fetch": "^2.7.0"
+  }
+}
