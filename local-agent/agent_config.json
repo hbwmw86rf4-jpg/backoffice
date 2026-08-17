@@ -4,6 +4,8 @@
   "watchDirs": [
     "\\\\10.5.48.2\\XMLGateway\\BOOutBox",
     "\\\\10.5.48.2\\XMLGateway\\FuelPriceManagement\\BOOutBox",
+    "Z:\\BOOutBox",
+    "Z:\\FuelPriceManagement\\BOOutBox",
     "C:\\Passport\\BOOutbox",
     "C:\\Passport\\FuelOutbox"
   ]
