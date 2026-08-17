@@ -2,11 +2,10 @@
   "endpoint": "https://backoffice-fancy-oyster-2gt.spcf.app",
   "apiKey": "YOUR_API_KEY_HERE",
   "watchDirs": [
-    "\\\\10.5.48.2\\XMLGateway\\BOOutBox",
-    "\\\\10.5.48.2\\XMLGateway\\FuelPriceManagement\\BOOutBox",
-    "Z:\\BOOutBox",
-    "Z:\\FuelPriceManagement\\BOOutBox",
-    "C:\\Passport\\BOOutbox",
-    "C:\\Passport\\FuelOutbox"
-  ]
+    "C:\\Users\\shell\\Documents\\office\\backoffice\\data\\staging\\BOOutBox",
+    "C:\\Users\\shell\\Documents\\office\\backoffice\\data\\staging\\FuelOutBox"
+  ],
+  "deleteAfterUpload": false,
+  "syncTodayOnStartup": true,
+  "concurrency": 5
 }
