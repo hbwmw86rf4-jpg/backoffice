@@ -5,6 +5,53 @@ const chokidar = require('chokidar');
 // Configuration
 const CONFIG_FILE = path.join(__dirname, 'agent_config.json');
 const STATE_FILE = path.join(__dirname, 'agent_state.json');
+const LOCK_FILE = path.join(__dirname, 'agent.lock');
+const LOG_FILE = path.join(__dirname, 'agent.log');
+
+// --- Singleton Enforcement (PID Lockfile) ---
+function isPidRunning(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function acquireLock() {
+  if (fs.existsSync(LOCK_FILE)) {
+    try {
+      const existingPid = parseInt(fs.readFileSync(LOCK_FILE, 'utf-8').trim(), 10);
+      if (existingPid && isPidRunning(existingPid)) {
+        console.log(`[Agent] Another instance is already running (PID ${existingPid}). Exiting.`);
+        process.exit(0);
+      }
+    } catch (e) {}
+  }
+  fs.writeFileSync(LOCK_FILE, String(process.pid));
+}
+
+function releaseLock() {
+  try {
+    if (fs.existsSync(LOCK_FILE)) {
+      const current = parseInt(fs.readFileSync(LOCK_FILE, 'utf-8').trim(), 10);
+      if (current === process.pid) {
+        fs.unlinkSync(LOCK_FILE);
+      }
+    }
+  } catch (e) {}
+}
+
+process.on('exit', releaseLock);
+process.on('SIGINT', () => { releaseLock(); process.exit(0); });
+process.on('SIGTERM', () => { releaseLock(); process.exit(0); });
+process.on('uncaughtException', (err) => {
+  log(`[FATAL] Uncaught exception: ${err.stack || err.message}`);
+  releaseLock();
+  process.exit(1);
+});
+
+acquireLock();
 
 let config = {
   endpoint: 'https://backoffice-fancy-oyster-2gt.spcf.app',
@@ -27,7 +74,11 @@ if (fs.existsSync(CONFIG_FILE)) {
 }
 
 function log(msg) {
-  process.stdout.write(msg + '\n');
+  const line = `[${new Date().toISOString()}] ${msg}\n`;
+  process.stdout.write(line);
+  try {
+    fs.appendFileSync(LOG_FILE, line);
+  } catch (e) {}
 }
 
 // Track uploaded files
@@ -101,8 +152,8 @@ async function uploadSingleFile(filePath) {
     if (response.ok) {
       const data = await response.json();
       totalProcessed++;
-      const detail = data.result?.imported ? `(${data.result.imported} txs)` : (data.result?.status || 'ok');
-      log(`[${new Date().toLocaleTimeString()}] ✅ [#${totalProcessed}] ${fileName} -> ${detail}`);
+      const detail = data.result?.recordsImported !== undefined ? `(${data.result.recordsImported} txs)` : (data.result?.status || 'ok');
+      log(`✅ [#${totalProcessed}] ${fileName} -> ${detail}`);
       uploadedFiles.add(fileName);
       saveStateDebounced();
 
@@ -111,10 +162,10 @@ async function uploadSingleFile(filePath) {
       }
     } else {
       const errorText = await response.text();
-      log(`[${new Date().toLocaleTimeString()}] ❌ Failed ${fileName}: HTTP ${response.status} - ${errorText}`);
+      log(`❌ Failed ${fileName}: HTTP ${response.status} - ${errorText}`);
     }
   } catch (err) {
-    log(`[${new Date().toLocaleTimeString()}] ⚠️ Error ${fileName}: ${err.message}`);
+    log(`⚠️ Error ${fileName}: ${err.message}`);
   }
 }
 
@@ -128,7 +179,7 @@ const validDirs = config.watchDirs.filter(dir => {
 });
 
 log('====================================================');
-log('🚀 Passport POS -> Cloud Sync Agent');
+log('🚀 Passport POS -> Cloud Sync Agent (PID ' + process.pid + ')');
 log(`📡 Cloud Endpoint : ${config.endpoint}`);
 log(`👀 Active Watch Dirs (${validDirs.length}):`);
 validDirs.forEach(d => log(`   - ${d}`));
@@ -138,10 +189,11 @@ log('====================================================');
 // 1. Scan for today's and yesterday's files
 if (config.syncTodayOnStartup) {
   const now = new Date();
-  const d0 = now.toISOString().slice(2, 10).replace(/-/g, ''); // "260817"
-  const d1 = new Date(now.getTime() - 86400000).toISOString().slice(2, 10).replace(/-/g, ''); // "260816"
+  const d0 = now.toISOString().slice(2, 10).replace(/-/g, '');
+  const d1 = new Date(now.getTime() - 86400000).toISOString().slice(2, 10).replace(/-/g, '');
+  const d2 = new Date(now.getTime() - 172800000).toISOString().slice(2, 10).replace(/-/g, '');
   
-  log(`🔍 Scanning for today (${d0}) and yesterday (${d1}) files...`);
+  log(`🔍 Scanning for recent files (${d0}, ${d1}, ${d2})...`);
   
   let foundCount = 0;
   for (const dir of validDirs) {
@@ -149,7 +201,7 @@ if (config.syncTodayOnStartup) {
       const entries = fs.readdirSync(dir);
       for (const entry of entries) {
         if (entry.toLowerCase().endsWith('.xml')) {
-          if ((entry.includes(d0) || entry.includes(d1)) && !uploadedFiles.has(entry)) {
+          if ((entry.includes(d0) || entry.includes(d1) || entry.includes(d2)) && !uploadedFiles.has(entry)) {
             const fullPath = path.join(dir, entry);
             enqueueFile(fullPath);
             foundCount++;
@@ -174,7 +226,7 @@ const watcher = chokidar.watch(validDirs, {
 
 watcher.on('add', filePath => {
   if (filePath.toLowerCase().endsWith('.xml')) {
-    log(`[${new Date().toLocaleTimeString()}] 📥 New POS transaction detected: ${path.basename(filePath)}`);
+    log(`📥 New POS transaction detected: ${path.basename(filePath)}`);
     enqueueFile(filePath);
   }
 });
