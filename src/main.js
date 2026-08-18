@@ -351,10 +351,10 @@ ipcMain.handle('get-cstore-report', async (event, startDate, endDate) => {
           WHEN 1 THEN 'Edible'
           WHEN 2 THEN 'Non-Edible'
           WHEN 3 THEN 'Snacks'
-          WHEN 4 THEN 'Fountain'
+          WHEN 4 THEN 'Tobacco'
           WHEN 5 THEN 'Cigs'
-          WHEN 6 THEN 'HBA'
-          WHEN 7 THEN 'Fountain'
+          WHEN 6 THEN 'Beer'
+          WHEN 7 THEN 'Deli'
           WHEN 8 THEN 'Edible'
           WHEN 9 THEN 'Soda'
           WHEN 10 THEN 'Hot Food'
@@ -367,11 +367,10 @@ ipcMain.handle('get-cstore-report', async (event, startDate, endDate) => {
           WHEN 17 THEN 'Gas Card'
           WHEN 18 THEN 'Edible'
           WHEN 19 THEN 'HBA'
-          WHEN 20 THEN 'Vapes etc'
+          WHEN 20 THEN 'Liquor'
           WHEN 21 THEN 'Snacks'
-          WHEN 23 THEN 'Edible'
           WHEN 24 THEN 'Hot Food'
-          WHEN 25 THEN 'Beer'
+          WHEN 25 THEN 'Vapes etc'
           ELSE 'Uncategorized'
         END
       ) as department,
@@ -384,7 +383,7 @@ ipcMain.handle('get-cstore-report', async (event, startDate, endDate) => {
     LEFT JOIN departments d ON pb.department_id = d.id
     WHERE t.business_date BETWEEN ? AND ?
       AND ti.item_type = 'cstore'
-      AND CAST(ti.merchandise_code AS INTEGER) NOT IN (14, 15, 88888, 99994, 99998, 99999)
+      AND CAST(ti.merchandise_code AS INTEGER) NOT IN (14, 15, 23, 88888, 99994, 99998, 99999)
     GROUP BY department
     ORDER BY total_sales DESC
   `).all(start, end);
