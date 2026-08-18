@@ -615,9 +615,6 @@ function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_group_items_group ON group_items(group_id);
     CREATE INDEX IF NOT EXISTS idx_group_items_pricebook ON group_items(pricebook_id);
     CREATE INDEX IF NOT EXISTS idx_tank_readings_date ON tank_readings(reading_date);
-    CREATE INDEX IF NOT EXISTS idx_tank_readings_tank ON tank_readings(tank_id);
-    CREATE INDEX IF NOT EXISTS idx_fuel_deliveries_date ON fuel_deliveries(delivery_date);
-    CREATE INDEX IF NOT EXISTS idx_price_history_pricebook ON price_history(pricebook_id);
     CREATE INDEX IF NOT EXISTS idx_lp_events_type ON loss_prevention_events(event_type);
     CREATE INDEX IF NOT EXISTS idx_lp_events_cashier ON loss_prevention_events(cashier_id);
     CREATE INDEX IF NOT EXISTS idx_lp_events_date ON loss_prevention_events(created_at);

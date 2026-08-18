@@ -10,31 +10,41 @@ function createDailyBook(date) {
   const db = getDb();
   const existing = db.prepare('SELECT * FROM daily_book WHERE book_date = ?').get(date);
   if (existing) return existing;
-  const sales = db.prepare('SELECT COALESCE(SUM(total_amount), 0) as total FROM transactions WHERE business_date = ? AND is_voided = 0 AND is_training = 0').get(date);
+  const sales = db.prepare('SELECT COALESCE(SUM(total_amount), 0) as total FROM transactions WHERE business_date = ? AND COALESCE(is_voided, 0) = 0 AND COALESCE(is_training, 0) = 0').get(date);
   const fuelSales = db.prepare(`
     SELECT COALESCE(SUM(ti.total_amount), 0) as total
     FROM transaction_items ti JOIN transactions t ON ti.transaction_id = t.id
-    WHERE t.business_date = ? AND ti.item_type = 'fuel' AND t.is_voided = 0 AND t.is_training = 0
+    WHERE t.business_date = ? AND ti.item_type = 'fuel' AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
   `).get(date);
   const cstoreSales = db.prepare(`
     SELECT COALESCE(SUM(ti.total_amount), 0) as total
     FROM transaction_items ti JOIN transactions t ON ti.transaction_id = t.id
-    WHERE t.business_date = ? AND ti.item_type = 'cstore' AND t.is_voided = 0 AND t.is_training = 0
+    WHERE t.business_date = ? AND ti.item_type = 'cstore' AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
   `).get(date);
-  const tax = db.prepare('SELECT COALESCE(SUM(tax_amount), 0) as total FROM transactions WHERE business_date = ? AND is_voided = 0 AND is_training = 0').get(date);
+  const tax = db.prepare('SELECT COALESCE(SUM(tax_amount), 0) as total FROM transactions WHERE business_date = ? AND COALESCE(is_voided, 0) = 0 AND COALESCE(is_training, 0) = 0').get(date);
   const payments = db.prepare(`
     SELECT COALESCE(SUM(p.amount), 0) as total
     FROM payments p JOIN transactions t ON p.transaction_id = t.id
-    WHERE t.business_date = ? AND t.is_voided = 0 AND t.is_training = 0
+    WHERE t.business_date = ? AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
   `).get(date);
   const paidIn = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'paid_in'").get(date);
   const paidOut = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'paid_out'").get(date);
   const safeDrops = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'safe_drop'").get(date);
 
+  const totalSales = sales.total;
+  const totalFuel = fuelSales.total;
+  const totalCstore = cstoreSales.total;
+  const totalTax = tax.total;
+  const totalPayments = payments.total;
+  const totalPaidIn = paidIn.total;
+  const totalPaidOut = paidOut.total;
+  const totalSafeDrops = safeDrops.total;
+  const calculatedCash = totalPayments - totalPaidOut - totalSafeDrops + totalPaidIn;
+
   const result = db.prepare(`
-    INSERT INTO daily_book (book_date, total_sales, total_fuel_sales, total_cstore_sales, total_tax, total_payments, paid_in, paid_out, safe_drops)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(date, sales.total, fuelSales.total, cstoreSales.total, tax.total, payments.total, paidIn.total, paidOut.total, safeDrops.total);
+    INSERT INTO daily_book (book_date, total_sales, fuel_sales, cstore_sales, tax_collected, payments_total, paid_in, paid_out, safe_drops, calculated_cash)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(date, totalSales, totalFuel, totalCstore, totalTax, totalPayments, totalPaidIn, totalPaidOut, totalSafeDrops, calculatedCash);
   saveDb();
   return db.prepare('SELECT * FROM daily_book WHERE id = ?').get(result.lastInsertRowid);
 }
@@ -42,51 +52,55 @@ function createDailyBook(date) {
 function closeDailyBook(date, closingCash, closedBy) {
   const db = getDb();
   const book = db.prepare('SELECT * FROM daily_book WHERE book_date = ?').get(date);
-  if (!book) return { error: 'No daily book found' };
-  const expectedCash = (book.total_sales - book.total_payments) + book.paid_in - book.paid_out - book.safe_drops;
-  const variance = closingCash - expectedCash;
+  if (!book) throw new Error('Daily book not created for this date');
+  const cashOverShort = closingCash - book.calculated_cash;
   db.prepare(`
-    UPDATE daily_book SET closing_cash = ?, expected_cash = ?, cash_variance = ?, status = 'closed', closed_by = ?, closed_at = datetime('now')
+    UPDATE daily_book
+    SET closing_cash = ?, cash_over_short = ?, closed_by = ?, is_closed = 1, updated_at = CURRENT_TIMESTAMP
     WHERE book_date = ?
-  `).run(closingCash, expectedCash, variance, closedBy, date);
+  `).run(closingCash, cashOverShort, closedBy, date);
   saveDb();
   return db.prepare('SELECT * FROM daily_book WHERE book_date = ?').get(date);
 }
 
 function getXReport(date) {
   const db = getDb();
-  const sales = db.prepare('SELECT COUNT(*) as transactions, COALESCE(SUM(total_amount), 0) as total, COALESCE(SUM(gross_amount), 0) as gross, COALESCE(SUM(tax_amount), 0) as tax FROM transactions WHERE business_date = ? AND is_voided = 0 AND is_training = 0').get(date);
-  const payments = db.prepare("SELECT tender_code, COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND t.is_voided = 0 AND t.is_training = 0 GROUP BY tender_code ORDER BY total DESC").all(date);
-  const cash = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND p.tender_code = 'cash' AND t.is_voided = 0 AND t.is_training = 0").get(date);
+  const sales = db.prepare('SELECT COUNT(*) as transactions, COALESCE(SUM(total_amount), 0) as total, COALESCE(SUM(gross_amount), 0) as gross, COALESCE(SUM(tax_amount), 0) as tax FROM transactions WHERE business_date = ? AND COALESCE(is_voided, 0) = 0 AND COALESCE(is_training, 0) = 0').get(date);
+  const payments = db.prepare("SELECT tender_code, COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0 GROUP BY tender_code ORDER BY total DESC").all(date);
+  const cash = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND p.tender_code = 'cash' AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0").get(date);
   return { date, sales, payments, cashCollected: cash.total };
 }
 
-function getZReport(date) {
-  const xReport = getXReport(date);
-  const book = getDailyBook(date);
-  return { ...xReport, book };
+function getZReport(date, closingCash, closedBy) {
+  const x = getXReport(date);
+  const book = closeDailyBook(date, closingCash, closedBy);
+  return { ...x, dailyBook: book };
 }
 
 // Cash Control
-function addCashMovement(movement) {
+function addCashMovement(date, type, amount, reason, cashierId) {
   const db = getDb();
-  const result = db.prepare('INSERT INTO cash_movements (movement_date, movement_type, amount, reason, register_id, cashier_id) VALUES (?, ?, ?, ?, ?, ?)').run(movement.movement_date, movement.movement_type, movement.amount, movement.reason, movement.register_id, movement.cashier_id);
+  const result = db.prepare(`
+    INSERT INTO cash_movements (movement_date, movement_type, amount, reason, cashier_id)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(date, type, amount, reason, cashierId);
   saveDb();
-  return { id: result.lastInsertRowid };
+  return db.prepare('SELECT * FROM cash_movements WHERE id = ?').get(result.lastInsertRowid);
 }
 
 function getCashMovements(startDate, endDate, type) {
   const db = getDb();
-  let sql = 'SELECT * FROM cash_movements WHERE movement_date BETWEEN ? AND ?';
-  const params = [startDate, endDate];
-  if (type) { sql += ' AND movement_type = ?'; params.push(type); }
-  sql += ' ORDER BY movement_date DESC, created_at DESC';
-  return db.prepare(sql).all(...params);
+  const start = startDate || new Date().toLocaleDateString('en-CA');
+  const end = endDate || start;
+  if (type) {
+    return db.prepare('SELECT * FROM cash_movements WHERE movement_date BETWEEN ? AND ? AND movement_type = ? ORDER BY movement_date, id').all(start, end, type);
+  }
+  return db.prepare('SELECT * FROM cash_movements WHERE movement_date BETWEEN ? AND ? ORDER BY movement_date, id').all(start, end);
 }
 
 function getCashSummary(date) {
   const db = getDb();
-  const sales = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND p.tender_code = 'cash' AND t.is_voided = 0 AND t.is_training = 0").get(date);
+  const sales = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND p.tender_code = 'cash' AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0").get(date);
   const paidIn = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'paid_in'").get(date);
   const paidOut = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'paid_out'").get(date);
   const safeDrops = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'safe_drop'").get(date);

@@ -123,7 +123,7 @@ function exportSalesReport(date, format) {
       tax_amount,
       total_amount
     FROM transactions
-    WHERE business_date = ? AND is_voided = 0 AND is_training = 0
+    WHERE business_date = ? AND COALESCE(is_voided, 0) = 0 AND COALESCE(is_training, 0) = 0
     ORDER BY event_time
   `).all(date);
 
@@ -139,62 +139,65 @@ function exportSalesReport(date, format) {
 
 function exportFuelReport(startDate, endDate, format) {
   const db = getDb();
+  const start = startDate || new Date().toLocaleDateString('en-CA');
+  const end = endDate || start;
   const data = db.prepare(`
     SELECT
-      t.business_date,
       ti.fuel_grade_id,
       ti.description as grade_name,
-      ti.fuel_position_id,
+      ti.fuel_position_id as pump,
       ti.quantity as gallons,
-      ti.unit_price,
+      ti.unit_price as ppg,
       ti.total_amount as sales,
-      ti.promotion_amount,
-      ti.regular_price
+      t.business_date,
+      t.event_time
     FROM transaction_items ti
     JOIN transactions t ON ti.transaction_id = t.id
     WHERE t.business_date BETWEEN ? AND ?
-      AND ti.item_type = 'fuel'
-    ORDER BY t.business_date, ti.fuel_grade_id
-  `).all(startDate, endDate);
+      AND ti.item_type = 'fuel' AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
+    ORDER BY t.business_date, t.event_time
+  `).all(start, end);
 
-  const filename = `fuel_report_${startDate}_to_${endDate}.${format}`;
+  const filename = `fuel_report_${start}_${end}.${format}`;
   if (format === 'csv') {
     return exportToCSV(data, filename);
   } else if (format === 'xlsx') {
-    return exportToExcel(data, filename, 'Fuel Sales');
+    return exportToExcel(data, filename, 'Fuel');
   } else if (format === 'pdf') {
-    return generatePDF(data, filename, { title: 'Fuel Sales Report', subtitle: `${startDate} to ${endDate}` });
+    return generatePDF(data, filename, { title: 'Fuel Sales Report', startDate: start, endDate: end });
   }
 }
 
 function exportCStoreReport(startDate, endDate, format) {
   const db = getDb();
+  const start = startDate || new Date().toLocaleDateString('en-CA');
+  const end = endDate || start;
   const data = db.prepare(`
     SELECT
       ti.upc,
       ti.description,
       d.name as department,
-      ti.quantity as qty_sold,
-      ti.unit_price,
+      ti.quantity as qty,
+      ti.unit_price as price,
       ti.total_amount as sales,
       t.business_date,
-      t.cashier_id
+      t.event_time
     FROM transaction_items ti
     JOIN transactions t ON ti.transaction_id = t.id
     LEFT JOIN pricebook pb ON ti.upc = pb.upc
     LEFT JOIN departments d ON pb.department_id = d.id
     WHERE t.business_date BETWEEN ? AND ?
-      AND ti.item_type = 'cstore'
-    ORDER BY t.business_date, d.name, ti.description
-  `).all(startDate, endDate);
+      AND ti.item_type = 'cstore' AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
+    ORDER BY t.business_date, t.event_time
+  `).all(start, end);
 
-  const filename = `cstore_report_${startDate}_to_${endDate}.${format}`;
+  const filename = `cstore_report_${start}_${end}.${format}`;
   if (format === 'csv') {
     return exportToCSV(data, filename);
   } else if (format === 'xlsx') {
-    return exportToExcel(data, filename, 'C-Store Sales');
+    return exportToExcel(data, filename, 'C-Store');
   } else if (format === 'pdf') {
-    return generatePDF(data, filename, { title: 'C-Store Sales Report', subtitle: `${startDate} to ${endDate}` });
+    return generatePDF(data, filename, { title: 'C-Store Sales Report', startDate: start, endDate: end });
   }
 }
 
