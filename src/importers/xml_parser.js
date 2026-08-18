@@ -72,18 +72,52 @@ function extractTransactionData(parsed) {
   const report = journal.JournalReport || {};
   const journalHeader = report.JournalHeader || {};
 
-  let saleEvents = [];
+  /**
+   * =========================================================================================
+   * GILBARCO PASSPORT NAXML JOURNAL EVENT CLASSIFICATION GUIDE FOR DEVELOPERS:
+   * =========================================================================================
+   * Gilbarco-VeederRoot Passport POS generates 3 distinct transaction-level event types:
+   *
+   * 1. <SaleEvent>: Standard retail sales transactions (Fuel + C-Store merchandise).
+   *
+   * 2. <VoidEvent>: Complete register transaction voids.
+   *    - Contains normal-looking item lines that were cancelled/aborted at the register.
+   *    - MUST have tx.is_voided = 1.
+   *    - Line items MUST NOT be inserted into `transaction_items` to prevent phantom sales.
+   *    - Logged to `loss_prevention_events` (event_type: 'transaction_void') for manager review.
+   *
+   * 3. <RefundEvent>: Covers two completely different operational scenarios:
+   *    a) CASH PAID OUT (Operational Expenses):
+   *       - Identified by <MerchandiseCodeLine> with <MerchandiseCode> 23 and <Description> "PAID OUT".
+   *       - Has negative amounts (e.g. SalesAmount: -600.00, Tender: cash -600.00).
+   *       - Light on details (no UPC/product code).
+   *       - Recorded in `cash_movements` table as `movement_type = 'paid_out'` for daily book accounting.
+   *       - MUST have tx.is_voided = 1 so it is excluded from merchandise sales totals.
+   *    b) CUSTOMER PRODUCT RETURNS / REFUNDS:
+   *       - Identified by <ItemLine> (contains POSCode/UPC, regular sell price, merchandise code, etc.)
+   *         or non-23 merchandise lines with negative quantities/amounts (e.g. -$1.49 Hog Wash Lemonade).
+   *       - Excluded from sales totals (tx.is_voided = 1) per store policy.
+   *       - Flagged in `loss_prevention_events` (event_type: 'refund_processed') as a security audit trail.
+   * =========================================================================================
+   */
+
+  let rawEvents = [];
   for (const key in report) {
     if (key.endsWith('Event')) {
       const events = Array.isArray(report[key]) ? report[key] : [report[key]];
-      saleEvents = saleEvents.concat(events);
+      for (const ev of events) {
+        if (ev) rawEvents.push({ eventType: key, event: ev });
+      }
     }
   }
   
   const transactions = [];
 
-  for (const event of saleEvents) {
+  for (const { eventType, event } of rawEvents) {
     if (!event) continue;
+
+    const isExplicitVoid = eventType === 'VoidEvent' || (event.VoidFlag && (event.VoidFlag.value === 'yes' || event.VoidFlag === 'yes'));
+    const isExplicitRefund = eventType === 'RefundEvent';
 
     const tx = {
       store_id: header.StoreLocationID || '1',
@@ -96,7 +130,7 @@ function extractTransactionData(parsed) {
       event_time: event.EventStartTime || '',
       is_outside_sale: event.OutsideSalesFlag && event.OutsideSalesFlag.value === 'yes' ? 1 : 0,
       is_training: event.TrainingModeFlag && event.TrainingModeFlag.value === 'yes' ? 1 : 0,
-      is_voided: 0,
+      is_voided: (isExplicitVoid || isExplicitRefund) ? 1 : 0,
       gross_amount: 0,
       net_amount: 0,
       tax_amount: 0,
@@ -108,6 +142,7 @@ function extractTransactionData(parsed) {
     const items = [];
     const payments = [];
     const lossPreventionEvents = [];
+    const cashMovements = [];
 
     for (const line of lines) {
       if (!line) continue;
@@ -117,11 +152,7 @@ function extractTransactionData(parsed) {
         const promo = fuel.Promotion || {};
         const isVoid = fuel.VoidFlag && (fuel.VoidFlag.value === 'yes' || fuel.VoidFlag === 'yes') || (line.status === 'voided');
         if (isVoid) tx.is_voided = 1;
-        // Any non-'normal' status (voided, cancel, or any future value) means this line
-        // should NOT count toward sales totals -- e.g. a fuel prepay placeholder gets
-        // status="cancel" once superseded by the real FuelLine fulfillment. Without this,
-        // the cancelled placeholder and the real fuel line both count, doubling the total.
-        const isExcluded = isVoid || (line.status !== 'normal');
+        const isExcluded = isVoid || isExplicitVoid || isExplicitRefund || (line.status !== 'normal');
         const isReturn = fuel.ReturnFlag && (fuel.ReturnFlag.value === 'yes' || fuel.ReturnFlag === 'yes');
         let multiplier = 1;
         if (isExcluded) multiplier = 0;
@@ -151,7 +182,7 @@ function extractTransactionData(parsed) {
         const prepay = line.FuelPrepayLine;
         const isVoid = prepay.VoidFlag && (prepay.VoidFlag.value === 'yes' || prepay.VoidFlag === 'yes') || (line.status === 'voided');
         if (isVoid) tx.is_voided = 1;
-        const isExcluded = isVoid || (line.status !== 'normal');
+        const isExcluded = isVoid || isExplicitVoid || isExplicitRefund || (line.status !== 'normal');
         const isReturn = prepay.ReturnFlag && (prepay.ReturnFlag.value === 'yes' || prepay.ReturnFlag === 'yes');
         let multiplier = 1;
         if (isExcluded) multiplier = 0;
@@ -180,79 +211,118 @@ function extractTransactionData(parsed) {
         }
       } else if (line.MerchandiseCodeLine) {
         const merch = line.MerchandiseCodeLine;
-        const isVoid = merch.VoidFlag && (merch.VoidFlag.value === 'yes' || merch.VoidFlag === 'yes') || (line.status === 'voided');
-        if (isVoid) tx.is_voided = 1;
-        const isExcluded = isVoid || (line.status !== 'normal');
-        const isReturn = merch.ReturnFlag && (merch.ReturnFlag.value === 'yes' || merch.ReturnFlag === 'yes');
-        let multiplier = 1;
-        if (isExcluded) multiplier = 0;
-        else if (isReturn) multiplier = -1;
+        const merchCode = textVal(merch.MerchandiseCode) || '';
+        const merchDesc = textVal(merch.Description) || '';
+        const rawAmt = parseFloat(textVal(merch.SalesAmount)) || 0;
+        const rawQty = parseFloat(textVal(merch.SalesQuantity)) || 1;
 
-        if (multiplier !== 0) {
-          const merchCode = textVal(merch.MerchandiseCode) || '';
-          const rawQty = parseFloat(textVal(merch.SalesQuantity)) || 1;
-          const rawAmt = parseFloat(textVal(merch.SalesAmount)) || 0;
-          // ActualSalesPrice can represent the EXTENDED total rather than a true per-unit
-          // price on multi-quantity lines (e.g. a "2 for $1.78" ring where ActualSalesPrice
-          // equals SalesAmount, not the $0.89 unit price). SalesAmount/SalesQuantity is
-          // unambiguous and matches RegularSellPrice in that case -- use it as primary.
-          const unitPrice = rawQty !== 0 ? (rawAmt / rawQty) : (parseFloat(textVal(merch.ActualSalesPrice)) || 0);
-          items.push({
-            item_type: 'cstore',
-            upc: normalizeUpc(merchCode),
-            description: textVal(merch.Description) || (merchCode ? `Dept ${merchCode}` : 'Open Sale'),
-            merchandise_code: merchCode,
-            quantity: rawQty * multiplier,
-            unit_price: unitPrice,
-            total_amount: rawAmt * multiplier,
-            tax_level_id: merch.ItemTax ? (textVal(merch.ItemTax.TaxLevelID) || '') : '',
-            fuel_grade_id: '',
-            fuel_position_id: '',
-            price_tier_code: '',
-            service_level: '',
-            promotion_id: '',
-            promotion_reason: '',
-            promotion_amount: 0,
-            regular_price: parseFloat(textVal(merch.RegularSellPrice)) || 0
+        // Check if this is a Cash Paid Out (Merchandise Code 23 or Description "PAID OUT")
+        if (merchCode === '23' || merchDesc.toUpperCase().includes('PAID OUT') || (isExplicitRefund && merchCode === '23')) {
+          const paidOutAmt = Math.abs(rawAmt);
+          cashMovements.push({
+            movement_date: tx.business_date,
+            movement_type: 'paid_out',
+            amount: paidOutAmt,
+            reason: merchDesc || 'PAID OUT',
+            cashier_id: tx.cashier_id,
+            register_id: tx.register_id
           });
-          const bypassEvent = checkAgeVerificationBypass(merch, textVal(merch.Description), merchCode);
-          if (bypassEvent) lossPreventionEvents.push(bypassEvent);
+          tx.is_voided = 1; // Exclude from merchandise sales totals
+        } else if (isExplicitRefund) {
+          // General Merchandise Refund
+          lossPreventionEvents.push({
+            event_type: 'refund_processed',
+            severity: 'medium',
+            cashier_id: tx.cashier_id,
+            register_id: tx.register_id,
+            description: `Merchandise Refund: Dept ${merchCode} (${Math.abs(rawAmt).toFixed(2)})`,
+            amount: Math.abs(rawAmt)
+          });
+          tx.is_voided = 1;
+        } else {
+          const isVoid = merch.VoidFlag && (merch.VoidFlag.value === 'yes' || merch.VoidFlag === 'yes') || (line.status === 'voided');
+          if (isVoid) tx.is_voided = 1;
+          const isExcluded = isVoid || isExplicitVoid || (line.status !== 'normal');
+          const isReturn = merch.ReturnFlag && (merch.ReturnFlag.value === 'yes' || merch.ReturnFlag === 'yes');
+          let multiplier = 1;
+          if (isExcluded) multiplier = 0;
+          else if (isReturn) multiplier = -1;
+
+          if (multiplier !== 0) {
+            const unitPrice = rawQty !== 0 ? (rawAmt / rawQty) : (parseFloat(textVal(merch.ActualSalesPrice)) || 0);
+            items.push({
+              item_type: 'cstore',
+              upc: normalizeUpc(merchCode),
+              description: merchDesc || (merchCode ? `Dept ${merchCode}` : 'Open Sale'),
+              merchandise_code: merchCode,
+              quantity: rawQty * multiplier,
+              unit_price: unitPrice,
+              total_amount: rawAmt * multiplier,
+              tax_level_id: merch.ItemTax ? (textVal(merch.ItemTax.TaxLevelID) || '') : '',
+              fuel_grade_id: '',
+              fuel_position_id: '',
+              price_tier_code: '',
+              service_level: '',
+              promotion_id: '',
+              promotion_reason: '',
+              promotion_amount: 0,
+              regular_price: parseFloat(textVal(merch.RegularSellPrice)) || 0
+            });
+            const bypassEvent = checkAgeVerificationBypass(merch, merchDesc, merchCode);
+            if (bypassEvent) lossPreventionEvents.push(bypassEvent);
+          }
         }
       } else if (line.ItemLine) {
         const item = line.ItemLine;
         const code = item.ItemCode || {};
-        const isVoid = item.VoidFlag && (item.VoidFlag.value === 'yes' || item.VoidFlag === 'yes') || (line.status === 'voided');
-        if (isVoid) tx.is_voided = 1;
-        const isExcluded = isVoid || (line.status !== 'normal');
-        const isReturn = item.ReturnFlag && (item.ReturnFlag.value === 'yes' || item.ReturnFlag === 'yes');
-        let multiplier = 1;
-        if (isExcluded) multiplier = 0;
-        else if (isReturn) multiplier = -1;
+        const itemDesc = textVal(item.Description) || '';
+        const itemUpc = normalizeUpc(textVal(code.POSCode));
+        const rawQty = parseFloat(textVal(item.SalesQuantity)) || 0;
+        const rawAmt = parseFloat(textVal(item.SalesAmount)) || 0;
 
-        if (multiplier !== 0) {
-          const rawQty = parseFloat(textVal(item.SalesQuantity)) || 0;
-          const rawAmt = parseFloat(textVal(item.SalesAmount)) || 0;
-          const unitPrice = rawQty !== 0 ? (rawAmt / rawQty) : (parseFloat(textVal(item.ActualSalesPrice)) || 0);
-          items.push({
-            item_type: 'cstore',
-            upc: normalizeUpc(textVal(code.POSCode)),
-            description: textVal(item.Description) || '',
-            merchandise_code: textVal(item.MerchandiseCode) || '',
-            quantity: rawQty * multiplier,
-            unit_price: unitPrice,
-            total_amount: rawAmt * multiplier,
-            tax_level_id: item.ItemTax ? (textVal(item.ItemTax.TaxLevelID) || '') : '',
-            fuel_grade_id: '',
-            fuel_position_id: '',
-            price_tier_code: '',
-            service_level: '',
-            promotion_id: '',
-            promotion_reason: '',
-            promotion_amount: 0,
-            regular_price: parseFloat(textVal(item.RegularSellPrice)) || 0
+        if (isExplicitRefund || rawQty < 0 || rawAmt < 0) {
+          // Customer Product Return / Refund
+          lossPreventionEvents.push({
+            event_type: 'refund_processed',
+            severity: 'medium',
+            cashier_id: tx.cashier_id,
+            register_id: tx.register_id,
+            description: `Product Return: ${itemDesc} [UPC: ${itemUpc}] ($${Math.abs(rawAmt).toFixed(2)})`,
+            amount: Math.abs(rawAmt)
           });
-          const bypassEvent = checkAgeVerificationBypass(item, textVal(item.Description), textVal(item.MerchandiseCode));
-          if (bypassEvent) lossPreventionEvents.push(bypassEvent);
+          tx.is_voided = 1; // Excluded from gross/net sales per store reporting requirements
+        } else {
+          const isVoid = item.VoidFlag && (item.VoidFlag.value === 'yes' || item.VoidFlag === 'yes') || (line.status === 'voided');
+          if (isVoid) tx.is_voided = 1;
+          const isExcluded = isVoid || isExplicitVoid || (line.status !== 'normal');
+          const isReturn = item.ReturnFlag && (item.ReturnFlag.value === 'yes' || item.ReturnFlag === 'yes');
+          let multiplier = 1;
+          if (isExcluded) multiplier = 0;
+          else if (isReturn) multiplier = -1;
+
+          if (multiplier !== 0) {
+            const unitPrice = rawQty !== 0 ? (rawAmt / rawQty) : (parseFloat(textVal(item.ActualSalesPrice)) || 0);
+            items.push({
+              item_type: 'cstore',
+              upc: itemUpc,
+              description: itemDesc,
+              merchandise_code: textVal(item.MerchandiseCode) || '',
+              quantity: rawQty * multiplier,
+              unit_price: unitPrice,
+              total_amount: rawAmt * multiplier,
+              tax_level_id: item.ItemTax ? (textVal(item.ItemTax.TaxLevelID) || '') : '',
+              fuel_grade_id: '',
+              fuel_position_id: '',
+              price_tier_code: '',
+              service_level: '',
+              promotion_id: '',
+              promotion_reason: '',
+              promotion_amount: 0,
+              regular_price: parseFloat(textVal(item.RegularSellPrice)) || 0
+            });
+            const bypassEvent = checkAgeVerificationBypass(item, itemDesc, textVal(item.MerchandiseCode));
+            if (bypassEvent) lossPreventionEvents.push(bypassEvent);
+          }
         }
       } else if (line.TenderInfo) {
         const tender = line.TenderInfo;
@@ -266,20 +336,20 @@ function extractTransactionData(parsed) {
           tx.is_outside_sale = 1;
         }
 
-        payments.push({
-          tender_code: tenderCode,
-          tender_sub_code: tenderSubCode,
-          amount: parseFloat(textVal(tender.TenderAmount)) || 0,
-          authorization_code: textVal(auth.ApprovalReferenceCode) || '',
-          provider_id: textVal(auth.ProviderID) || '',
-          reference_number: textVal(auth.ReferenceNumber) || '',
-          auth_date: textVal(auth.AuthorizationDate) || '',
-          auth_time: textVal(auth.AuthorizationTime) || ''
-        });
-      } else if (line.TransactionTax) {
-        // Sum across all TransactionTax lines -- a transaction can have one per
-        // distinct tax level (e.g. a taxable snack + fuel in the same sale), and
-        // overwriting here would silently drop every tax line but the last.
+        // Do not record payments on voided or refund transactions to avoid skewing register tender reconciliation
+        if (!isExplicitVoid && !isExplicitRefund) {
+          payments.push({
+            tender_code: tenderCode,
+            tender_sub_code: tenderSubCode,
+            amount: parseFloat(textVal(tender.TenderAmount)) || 0,
+            authorization_code: textVal(auth.ApprovalReferenceCode) || '',
+            provider_id: textVal(auth.ProviderID) || '',
+            reference_number: textVal(auth.ReferenceNumber) || '',
+            auth_date: textVal(auth.AuthorizationDate) || '',
+            auth_time: textVal(auth.AuthorizationTime) || ''
+          });
+        }
+      } else if (line.TransactionTax && !isExplicitVoid && !isExplicitRefund) {
         tx.tax_amount = (tx.tax_amount || 0) + (parseFloat(textVal(line.TransactionTax.TaxCollectedAmount)) || 0);
       }
     }
@@ -294,9 +364,20 @@ function extractTransactionData(parsed) {
       }
     }
 
-    // Filter out transactions with no actual items or payments after void processing
-    if (items.length > 0 || payments.length > 0) {
-      transactions.push({ tx, items, payments, lossPreventionEvents });
+    if (isExplicitVoid) {
+      lossPreventionEvents.push({
+        event_type: 'transaction_void',
+        severity: 'medium',
+        cashier_id: tx.cashier_id,
+        register_id: tx.register_id,
+        description: `Transaction ${tx.transaction_id} voided on register ${tx.register_id}`,
+        amount: tx.total_amount
+      });
+    }
+
+    // Keep transaction record if it has items, payments, cash movements, or is a void/refund
+    if (items.length > 0 || payments.length > 0 || cashMovements.length > 0 || isExplicitVoid || isExplicitRefund) {
+      transactions.push({ tx, items: (isExplicitVoid || isExplicitRefund) ? [] : items, payments, lossPreventionEvents, cashMovements });
     }
   }
 
@@ -342,9 +423,13 @@ async function importXmlFile(filePath) {
       INSERT INTO loss_prevention_events (event_type, severity, cashier_id, register_id, description, amount, transaction_id)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
+    const insertCashMovement = db.prepare(`
+      INSERT INTO cash_movements (movement_date, movement_type, amount, reason, register_id, cashier_id)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
 
     const importAll = db.transaction(() => {
-      for (const { tx, items, payments, lossPreventionEvents } of transactions) {
+      for (const { tx, items, payments, lossPreventionEvents, cashMovements } of transactions) {
         try {
           const result = insertTx.run(
             tx.store_id, tx.transaction_id, tx.cashier_id, tx.register_id, tx.till_id,
@@ -358,6 +443,9 @@ async function importXmlFile(filePath) {
             const existing = db.prepare('SELECT id FROM transactions WHERE register_id = ? AND transaction_id = ? AND business_date = ?').get(tx.register_id, tx.transaction_id, tx.business_date);
             if (existing) {
               txId = existing.id;
+              if (tx.is_voided) {
+                db.prepare('UPDATE transactions SET is_voided = 1 WHERE id = ?').run(txId);
+              }
             }
           }
 
@@ -384,9 +472,12 @@ async function importXmlFile(filePath) {
               insertLossEvent.run(lossEvent.event_type, lossEvent.severity, tx.cashier_id, tx.register_id,
                 lossEvent.description, lossEvent.amount || 0, txId);
             }
-
-            importedCount++;
           }
+
+          for (const cm of (cashMovements || [])) {
+            insertCashMovement.run(cm.movement_date, cm.movement_type, cm.amount, cm.reason, cm.register_id, cm.cashier_id);
+          }
+          importedCount++;
         } catch (txError) {
           console.error('Transaction import error:', txError.stack || txError.message);
         }

@@ -55,11 +55,11 @@ function getCashierAuditSummary(startDate, endDate) {
     SELECT
       cashier_id,
       COUNT(*) as total_events,
-      SUM(CASE WHEN event_type = 'voided_transaction' THEN 1 ELSE 0 END) as voids,
+      SUM(CASE WHEN event_type IN ('voided_transaction', 'transaction_void') THEN 1 ELSE 0 END) as voids,
       SUM(CASE WHEN event_type = 'cashier_deletion' THEN 1 ELSE 0 END) as deletions,
       SUM(CASE WHEN event_type = 'large_sale' THEN 1 ELSE 0 END) as large_sales,
       SUM(CASE WHEN event_type = 'no_sale' THEN 1 ELSE 0 END) as no_sales,
-      SUM(CASE WHEN event_type = 'refund' THEN 1 ELSE 0 END) as refunds,
+      SUM(CASE WHEN event_type IN ('refund', 'refund_processed') THEN 1 ELSE 0 END) as refunds,
       SUM(CASE WHEN event_type = 'discount_given' THEN 1 ELSE 0 END) as discounts,
       SUM(amount) as total_flagged_amount
     FROM loss_prevention_events
@@ -75,7 +75,7 @@ function checkThresholdAlerts() {
   const largeVoids = db.prepare(`
     SELECT cashier_id, COUNT(*) as count, SUM(amount) as total
     FROM loss_prevention_events
-    WHERE event_type = 'voided_transaction' AND date(created_at) = date('now')
+    WHERE event_type IN ('voided_transaction', 'transaction_void') AND date(created_at) = date('now')
     GROUP BY cashier_id HAVING count > 5 OR total > 500
   `).all();
   largeVoids.forEach(v => {
@@ -84,7 +84,7 @@ function checkThresholdAlerts() {
   const largeRefunds = db.prepare(`
     SELECT cashier_id, COUNT(*) as count, SUM(amount) as total
     FROM loss_prevention_events
-    WHERE event_type = 'refund' AND date(created_at) = date('now')
+    WHERE event_type IN ('refund', 'refund_processed') AND date(created_at) = date('now')
     GROUP BY cashier_id HAVING count > 3 OR total > 200
   `).all();
   largeRefunds.forEach(r => {

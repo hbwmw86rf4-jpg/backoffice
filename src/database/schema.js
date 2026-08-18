@@ -31,6 +31,7 @@ function getDb() {
   db.pragma('journal_mode = WAL');
   db.pragma('synchronous = NORMAL');
   db.pragma('temp_store = MEMORY');
+  db.pragma('cache_size = -64000'); // 64MB Cache
   db.pragma('mmap_size = 30000000000');
   db.pragma('page_size = 32768');
   db.pragma('foreign_keys = ON');
@@ -603,12 +604,20 @@ function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_transactions_cashier ON transactions(cashier_id);
     CREATE INDEX IF NOT EXISTS idx_transactions_register ON transactions(register_id);
     CREATE INDEX IF NOT EXISTS idx_transactions_date_id ON transactions(business_date, id);
+    CREATE INDEX IF NOT EXISTS idx_tx_date_void_train ON transactions(business_date, is_voided, is_training);
+    CREATE INDEX IF NOT EXISTS idx_tx_source_file ON transactions(source_file);
     CREATE INDEX IF NOT EXISTS idx_transaction_items_transaction ON transaction_items(transaction_id);
+    CREATE INDEX IF NOT EXISTS idx_tx_items_tx_type ON transaction_items(transaction_id, item_type);
     CREATE INDEX IF NOT EXISTS idx_transaction_items_upc ON transaction_items(upc);
+    CREATE INDEX IF NOT EXISTS idx_tx_items_upc_type ON transaction_items(upc, item_type);
     CREATE INDEX IF NOT EXISTS idx_transaction_items_type_code ON transaction_items(item_type, merchandise_code);
     CREATE INDEX IF NOT EXISTS idx_payments_transaction ON payments(transaction_id);
+    CREATE INDEX IF NOT EXISTS idx_payments_tx_tender ON payments(transaction_id, tender_code);
     CREATE INDEX IF NOT EXISTS idx_pricebook_upc ON pricebook(upc);
     CREATE INDEX IF NOT EXISTS idx_pricebook_department ON pricebook(department_id);
+    CREATE INDEX IF NOT EXISTS idx_pricebook_upc_dept ON pricebook(upc, department_id);
+    CREATE INDEX IF NOT EXISTS idx_cash_movements_dt_type ON cash_movements(movement_date, movement_type);
+    CREATE INDEX IF NOT EXISTS idx_lp_events_dt_type ON loss_prevention_events(created_at, event_type);
     CREATE INDEX IF NOT EXISTS idx_shift_summaries_date ON shift_summaries(shift_date);
     CREATE INDEX IF NOT EXISTS idx_brands_upc_prefix ON brands(upc_prefix);
     CREATE INDEX IF NOT EXISTS idx_item_groups_name ON item_groups(name);

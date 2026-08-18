@@ -55,6 +55,7 @@ function getMonthlyFuelReconciliation(year, month) {
     FROM transaction_items ti
     JOIN transactions t ON ti.transaction_id = t.id
     WHERE t.business_date BETWEEN ? AND ? AND ti.item_type = 'fuel'
+      AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
     GROUP BY ti.fuel_grade_id, ti.description
   `).all(startDate, endDate);
   const deliveries = db.prepare(`
@@ -86,6 +87,7 @@ function getFuelMarginReport(startDate, endDate) {
     FROM transaction_items ti
     JOIN transactions t ON ti.transaction_id = t.id
     WHERE t.business_date BETWEEN ? AND ? AND ti.item_type = 'fuel'
+      AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
     GROUP BY ti.fuel_grade_id, ti.description
   `).all(start, end, start, end);
 }
@@ -105,6 +107,7 @@ function getVendorSalesReport(startDate, endDate) {
     JOIN transactions t ON ti.transaction_id = t.id
     LEFT JOIN pricebook pb ON ti.upc = pb.upc
     WHERE t.business_date BETWEEN ? AND ? AND ti.item_type = 'cstore'
+      AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
       AND CAST(ti.merchandise_code AS INTEGER) NOT IN (14, 15, 17, 23, 88888, 99994, 99998, 99999)
     GROUP BY COALESCE(pb.vendor, 'Store Item')
     ORDER BY total_sales DESC
@@ -154,6 +157,7 @@ function getCategorySalesReport(startDate, endDate) {
     LEFT JOIN pricebook pb ON ti.upc = pb.upc
     LEFT JOIN departments d ON pb.department_id = d.id
     WHERE t.business_date BETWEEN ? AND ? AND ti.item_type = 'cstore'
+      AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
       AND CAST(ti.merchandise_code AS INTEGER) NOT IN (14, 15, 23, 88888, 99994, 99998, 99999)
     GROUP BY category
     ORDER BY total_sales DESC
@@ -174,6 +178,7 @@ function getManufacturerSalesReport(startDate, endDate) {
     JOIN transactions t ON ti.transaction_id = t.id
     LEFT JOIN pricebook pb ON ti.upc = pb.upc
     WHERE t.business_date BETWEEN ? AND ? AND ti.item_type = 'cstore'
+      AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
       AND CAST(ti.merchandise_code AS INTEGER) NOT IN (14, 15, 23, 88888, 99994, 99998, 99999)
     GROUP BY pb.vendor
     ORDER BY total_sales DESC
@@ -227,6 +232,7 @@ function getDepartmentAnalysis(startDate, endDate) {
     LEFT JOIN pricebook pb ON ti.upc = pb.upc
     LEFT JOIN departments d ON pb.department_id = d.id
     WHERE t.business_date BETWEEN ? AND ? AND ti.item_type = 'cstore'
+      AND COALESCE(t.is_voided, 0) = 0 AND COALESCE(t.is_training, 0) = 0
       AND CAST(ti.merchandise_code AS INTEGER) NOT IN (14, 15, 23, 88888, 99994, 99998, 99999)
     GROUP BY department
     ORDER BY total_sales DESC
