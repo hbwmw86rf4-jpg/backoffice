@@ -10,22 +10,22 @@ function createDailyBook(date) {
   const db = getDb();
   const existing = db.prepare('SELECT * FROM daily_book WHERE book_date = ?').get(date);
   if (existing) return existing;
-  const sales = db.prepare('SELECT COALESCE(SUM(total_amount), 0) as total FROM transactions WHERE business_date = ?').get(date);
+  const sales = db.prepare('SELECT COALESCE(SUM(total_amount), 0) as total FROM transactions WHERE business_date = ? AND is_voided = 0 AND is_training = 0').get(date);
   const fuelSales = db.prepare(`
     SELECT COALESCE(SUM(ti.total_amount), 0) as total
     FROM transaction_items ti JOIN transactions t ON ti.transaction_id = t.id
-    WHERE t.business_date = ? AND ti.item_type = 'fuel'
+    WHERE t.business_date = ? AND ti.item_type = 'fuel' AND t.is_voided = 0 AND t.is_training = 0
   `).get(date);
   const cstoreSales = db.prepare(`
     SELECT COALESCE(SUM(ti.total_amount), 0) as total
     FROM transaction_items ti JOIN transactions t ON ti.transaction_id = t.id
-    WHERE t.business_date = ? AND ti.item_type = 'cstore'
+    WHERE t.business_date = ? AND ti.item_type = 'cstore' AND t.is_voided = 0 AND t.is_training = 0
   `).get(date);
-  const tax = db.prepare('SELECT COALESCE(SUM(tax_amount), 0) as total FROM transactions WHERE business_date = ?').get(date);
+  const tax = db.prepare('SELECT COALESCE(SUM(tax_amount), 0) as total FROM transactions WHERE business_date = ? AND is_voided = 0 AND is_training = 0').get(date);
   const payments = db.prepare(`
     SELECT COALESCE(SUM(p.amount), 0) as total
     FROM payments p JOIN transactions t ON p.transaction_id = t.id
-    WHERE t.business_date = ?
+    WHERE t.business_date = ? AND t.is_voided = 0 AND t.is_training = 0
   `).get(date);
   const paidIn = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'paid_in'").get(date);
   const paidOut = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'paid_out'").get(date);
@@ -55,9 +55,9 @@ function closeDailyBook(date, closingCash, closedBy) {
 
 function getXReport(date) {
   const db = getDb();
-  const sales = db.prepare('SELECT COUNT(*) as transactions, COALESCE(SUM(total_amount), 0) as total, COALESCE(SUM(gross_amount), 0) as gross, COALESCE(SUM(tax_amount), 0) as tax FROM transactions WHERE business_date = ?').get(date);
-  const payments = db.prepare('SELECT tender_code, COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? GROUP BY tender_code ORDER BY total DESC').all(date);
-  const cash = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND p.tender_code = 'cash'").get(date);
+  const sales = db.prepare('SELECT COUNT(*) as transactions, COALESCE(SUM(total_amount), 0) as total, COALESCE(SUM(gross_amount), 0) as gross, COALESCE(SUM(tax_amount), 0) as tax FROM transactions WHERE business_date = ? AND is_voided = 0 AND is_training = 0').get(date);
+  const payments = db.prepare("SELECT tender_code, COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND t.is_voided = 0 AND t.is_training = 0 GROUP BY tender_code ORDER BY total DESC").all(date);
+  const cash = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND p.tender_code = 'cash' AND t.is_voided = 0 AND t.is_training = 0").get(date);
   return { date, sales, payments, cashCollected: cash.total };
 }
 
@@ -86,7 +86,7 @@ function getCashMovements(startDate, endDate, type) {
 
 function getCashSummary(date) {
   const db = getDb();
-  const sales = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND p.tender_code = 'cash'").get(date);
+  const sales = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments p JOIN transactions t ON p.transaction_id = t.id WHERE t.business_date = ? AND p.tender_code = 'cash' AND t.is_voided = 0 AND t.is_training = 0").get(date);
   const paidIn = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'paid_in'").get(date);
   const paidOut = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'paid_out'").get(date);
   const safeDrops = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_movements WHERE movement_date = ? AND movement_type = 'safe_drop'").get(date);

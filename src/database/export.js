@@ -123,7 +123,7 @@ function exportSalesReport(date, format) {
       tax_amount,
       total_amount
     FROM transactions
-    WHERE business_date = ?
+    WHERE business_date = ? AND is_voided = 0 AND is_training = 0
     ORDER BY event_time
   `).all(date);
 
@@ -235,7 +235,7 @@ function exportPaymentReport(date, format) {
       p.provider_id
     FROM payments p
     JOIN transactions t ON p.transaction_id = t.id
-    WHERE t.business_date = ?
+    WHERE t.business_date = ? AND t.is_voided = 0 AND t.is_training = 0
     GROUP BY p.tender_code, p.tender_sub_code, p.provider_id
     ORDER BY total DESC
   `).all(date);

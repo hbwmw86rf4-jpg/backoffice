@@ -206,7 +206,7 @@ ipcMain.handle('get-dashboard-data', async (event, date) => {
       COALESCE(SUM(net_amount), 0) as total_net,
       COALESCE(SUM(tax_amount), 0) as total_tax,
       COALESCE(SUM(total_amount), 0) as total_collected
-    FROM transactions WHERE business_date = ?
+    FROM transactions WHERE business_date = ? AND is_voided = 0 AND is_training = 0
   `).get(targetDate) || { total_transactions: 0, total_gross: 0, total_net: 0, total_tax: 0, total_collected: 0 };
 
   const fuel = db.prepare(`
@@ -235,7 +235,7 @@ ipcMain.handle('get-dashboard-data', async (event, date) => {
       COALESCE(SUM(amount), 0) as total
     FROM payments p
     JOIN transactions t ON p.transaction_id = t.id
-    WHERE t.business_date = ?
+    WHERE t.business_date = ? AND t.is_voided = 0 AND t.is_training = 0
     GROUP BY tender_code
   `).all(targetDate);
 
@@ -245,7 +245,7 @@ ipcMain.handle('get-dashboard-data', async (event, date) => {
       COUNT(*) as transactions,
       COALESCE(SUM(total_amount), 0) as total_sales
     FROM transactions
-    WHERE business_date = ?
+    WHERE business_date = ? AND is_voided = 0 AND is_training = 0
     GROUP BY cashier_id
     ORDER BY total_sales DESC
     LIMIT 5
@@ -257,7 +257,7 @@ ipcMain.handle('get-dashboard-data', async (event, date) => {
       COUNT(*) as transactions,
       COALESCE(SUM(total_amount), 0) as sales
     FROM transactions
-    WHERE business_date = ?
+    WHERE business_date = ? AND is_voided = 0 AND is_training = 0
     GROUP BY SUBSTR(event_time, 1, 2)
     ORDER BY hour
   `).all(targetDate);
