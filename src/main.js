@@ -110,12 +110,14 @@ app.whenReady().then(async () => {
         mainWindow.webContents.send('pos-movement', data);
       }
     });
-    // Scan existing files on startup
-    posWatcher.scanAll().then(result => {
-      const bo = result.boOutbox;
-      const fuel = result.fuelOutbox;
-      console.log(`Startup scan: ${bo.processed + fuel.processed} new, ${bo.skipped + fuel.skipped} skipped, ${bo.errors + fuel.errors} errors`);
-    }).catch(e => console.error('Startup scan error:', e.message));
+    // Scan recent files in background after window load without blocking UI
+    setTimeout(() => {
+      posWatcher.scanAll().then(result => {
+        const bo = result.boOutbox;
+        const fuel = result.fuelOutbox;
+        console.log(`Startup scan: ${bo.processed + fuel.processed} new, ${bo.skipped + fuel.skipped} skipped, ${bo.errors + fuel.errors} errors`);
+      }).catch(e => console.error('Startup scan error:', e.message));
+    }, 2000);
   } catch (err) {
     console.error('WATCHER ERROR:', err.message);
   }

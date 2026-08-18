@@ -436,8 +436,13 @@ async function scanExisting(dir, label) {
     return { found: 0, processed: 0, skipped: 0, errors: 0 };
   }
 
-  const files = fs.readdirSync(dir).filter(f => f.toUpperCase().endsWith('.XML'));
-  console.log(`[${label}] Found ${files.length} XML files`);
+  const now = new Date();
+  const d0 = now.toISOString().slice(2, 10).replace(/-/g, '');
+  const d1 = new Date(now.getTime() - 86400000).toISOString().slice(2, 10).replace(/-/g, '');
+
+  const allFiles = fs.readdirSync(dir);
+  const files = allFiles.filter(f => f.toUpperCase().endsWith('.XML') && (f.includes(d0) || f.includes(d1)));
+  console.log(`[${label}] Found ${files.length} recent XML files (out of ${allFiles.length} total)`);
   let processed = 0;
   let skipped = 0;
   let errors = 0;

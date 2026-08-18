@@ -32,7 +32,7 @@ function getDb() {
   db.pragma('synchronous = NORMAL');
   db.pragma('temp_store = MEMORY');
   db.pragma('cache_size = -64000'); // 64MB Cache
-  db.pragma('mmap_size = 30000000000');
+  db.pragma('mmap_size = 268435456'); // 256MB memory map
   db.pragma('page_size = 32768');
   db.pragma('foreign_keys = ON');
 

@@ -62,7 +62,7 @@ let config = {
   ],
   deleteAfterUpload: false,
   syncTodayOnStartup: true,
-  concurrency: 5
+  concurrency: 2
 };
 
 if (fs.existsSync(CONFIG_FILE)) {
@@ -106,7 +106,7 @@ function saveStateDebounced() {
 const queue = [];
 let activeWorkers = 0;
 let totalProcessed = 0;
-const MAX_CONCURRENCY = config.concurrency || 5;
+const MAX_CONCURRENCY = config.concurrency || 2;
 
 function enqueueFile(filePath) {
   const fileName = path.basename(filePath);
@@ -146,7 +146,7 @@ async function uploadSingleFile(filePath) {
       headers: {
         'x-api-key': config.apiKey,
       },
-      signal: AbortSignal.timeout(20000)
+      signal: AbortSignal.timeout(60000)
     });
 
     if (response.ok) {
