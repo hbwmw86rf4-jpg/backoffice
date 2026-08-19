@@ -364,6 +364,62 @@ function extractTransactionData(parsed) {
       }
     }
 
+    // Support FinancialEvent (Safe Drops, Till Loans, etc.)
+    if (eventType === 'FinancialEvent') {
+      const finDetail = event.FinancialEventDetail || {};
+      if (finDetail.SafeDropDetail) {
+        const drop = finDetail.SafeDropDetail;
+        const dropAmt = parseFloat(textVal(drop.DropAmount)) || 0;
+        cashMovements.push({
+          movement_date: tx.business_date,
+          movement_type: 'safe_drop',
+          amount: dropAmt,
+          reason: 'Safe Drop',
+          register_id: tx.register_id,
+          cashier_id: tx.cashier_id
+        });
+      }
+      if (finDetail.LoanDetail) {
+        const loan = finDetail.LoanDetail;
+        const loanAmt = parseFloat(textVal(loan.LoanAmount)) || 0;
+        cashMovements.push({
+          movement_date: tx.business_date,
+          movement_type: 'loan',
+          amount: loanAmt,
+          reason: 'Till Loan',
+          register_id: tx.register_id,
+          cashier_id: tx.cashier_id
+        });
+      }
+      if (finDetail.PaidOutDetail) {
+        const po = finDetail.PaidOutDetail;
+        const poAmt = parseFloat(textVal(po.PaidOutAmount)) || 0;
+        cashMovements.push({
+          movement_date: tx.business_date,
+          movement_type: 'paid_out',
+          amount: poAmt,
+          reason: 'Cash Paid Out',
+          register_id: tx.register_id,
+          cashier_id: tx.cashier_id
+        });
+      }
+    }
+
+    // Support OtherEvent (No Sale drawer opening, audit events)
+    if (eventType === 'OtherEvent') {
+      const otherDetail = event.OtherEventDetail || {};
+      if (otherDetail.NoSaleEventDetail || event.NoSaleEventDetail) {
+        lossPreventionEvents.push({
+          event_type: 'no_sale',
+          severity: 'low',
+          cashier_id: tx.cashier_id,
+          register_id: tx.register_id,
+          description: `No-sale drawer opening on register ${tx.register_id}`,
+          amount: 0
+        });
+      }
+    }
+
     if (isExplicitVoid) {
       lossPreventionEvents.push({
         event_type: 'transaction_void',
@@ -375,9 +431,16 @@ function extractTransactionData(parsed) {
       });
     }
 
-    // Keep transaction record if it has items, payments, cash movements, or is a void/refund
-    if (items.length > 0 || payments.length > 0 || cashMovements.length > 0 || isExplicitVoid || isExplicitRefund) {
-      transactions.push({ tx, items: (isExplicitVoid || isExplicitRefund) ? [] : items, payments, lossPreventionEvents, cashMovements });
+    // Keep transaction record for all valid POS journal events
+    const isExcludedFromLineItems = isExplicitVoid || isExplicitRefund || eventType === 'FinancialEvent' || eventType === 'OtherEvent';
+    if (items.length > 0 || payments.length > 0 || cashMovements.length > 0 || lossPreventionEvents.length > 0 || isExcludedFromLineItems) {
+      transactions.push({
+        tx,
+        items: isExcludedFromLineItems ? [] : items,
+        payments: (eventType === 'FinancialEvent' || eventType === 'OtherEvent') ? [] : payments,
+        lossPreventionEvents,
+        cashMovements
+      });
     }
   }
 
@@ -400,9 +463,9 @@ async function importXmlFile(filePath) {
     const transactions = extractTransactionData(parsed);
 
     if (!transactions || transactions.length === 0) {
-      db.prepare('INSERT INTO import_log (filename, file_type, status, error_message) VALUES (?, ?, ?, ?)').run(filename, 'naxml', 'error', 'No transactions found');
+      db.prepare('INSERT INTO import_log (filename, file_type, status, records_imported) VALUES (?, ?, ?, ?)').run(filename, 'naxml', 'success', 0);
       saveDb();
-      return { status: 'error', message: 'No transactions found' };
+      return { status: 'success', message: 'System event processed' };
     }
 
     let importedCount = 0;

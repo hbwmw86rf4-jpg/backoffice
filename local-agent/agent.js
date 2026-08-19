@@ -241,4 +241,54 @@ watcher.on('error', err => {
   log(`Watcher error: ${err.message}`);
 });
 
-log('⚡ Real-time watcher active. Ready for new transactions.');
+// 3. Automated Self-Healing Health & Gap Auditor
+async function runHealthAudit() {
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('en-CA');
+  const d0 = now.toISOString().slice(2, 10).replace(/-/g, '');
+  const d1 = new Date(now.getTime() - 86400000).toISOString().slice(2, 10).replace(/-/g, '');
+
+  let recentFiles = [];
+  for (const dir of validDirs) {
+    try {
+      if (fs.existsSync(dir)) {
+        const files = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.xml') && (f.includes(d0) || f.includes(d1)));
+        recentFiles.push(...files.map(f => path.join(dir, f)));
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const res = await fetch(`${config.endpoint}/api/sync-audit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.apiKey
+      },
+      body: JSON.stringify({
+        date: todayStr,
+        tx_count: recentFiles.length,
+        version: '2.0.0'
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.needs_backfill || !data.in_sync) {
+        log(`🔄 [Auto-Heal] Gap detected (Store: ${recentFiles.length}, Cloud: ${data.cloud_tx_count}). Auto-backfilling missing transactions...`);
+        for (const fp of recentFiles) {
+          enqueueFile(fp);
+        }
+      }
+    }
+  } catch (err) {
+    // Network hiccup - will retry on next cycle
+  }
+}
+
+// Run audit every 30 seconds
+setInterval(runHealthAudit, 30000);
+setTimeout(runHealthAudit, 5000);
+
+log('⚡ Real-time watcher & Self-Healing Auditor active. Ready for new transactions.');

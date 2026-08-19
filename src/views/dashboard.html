@@ -123,10 +123,54 @@
           <button id="nextDate" class="btn btn-sm">&gt;</button>
           <button id="todayBtn" class="btn btn-sm btn-primary">Today</button>
         </div>
-        <div class="top-bar-right">
+        <div class="top-bar-right" style="display: flex; align-items: center; gap: 14px;">
+          <div id="syncStatusBadge" class="sync-status-badge" style="cursor: pointer; display: flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Live POS Sync Status — Click for Audit Breakdown">
+            <span id="syncStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 6px #10b981;"></span>
+            <span id="syncStatusText">Store Sync: 100% In Sync</span>
+          </div>
           <span id="lastImport" class="text-muted"></span>
         </div>
       </header>
+
+      <!-- Sync Health & Audit Modal -->
+      <div id="syncAuditModal" class="modal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);">
+        <div class="modal-content" style="background: #ffffff; margin: 10% auto; padding: 24px; border-radius: 12px; max-width: 520px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); font-family: inherit;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">🛡️</span>
+              <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">POS & Cloud Data Integrity Audit</h3>
+            </div>
+            <button class="modal-close" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #64748b;" onclick="document.getElementById('syncAuditModal').style.display='none'">&times;</button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
+                <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 4px;">Store PC (POS Register)</div>
+                <div id="modalStoreTx" style="font-size: 18px; font-weight: 700; color: #0f172a;">-- Transactions</div>
+                <div id="modalStoreSales" style="font-size: 13px; font-weight: 600; color: #059669;">$-- Sales</div>
+              </div>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
+                <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 4px;">Cloud Portal</div>
+                <div id="modalCloudTx" style="font-size: 18px; font-weight: 700; color: #0f172a;">-- Transactions</div>
+                <div id="modalCloudSales" style="font-size: 13px; font-weight: 600; color: #059669;">$-- Sales</div>
+              </div>
+            </div>
+            
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 13px; font-weight: 600; color: #166534;">Integrity & Variance Status</span>
+                <span id="modalVarianceBadge" style="font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: #dcfce7; color: #15803d;">$0.00 Variance</span>
+              </div>
+              <p id="modalAuditDetail" style="margin: 0; font-size: 12px; color: #15803d;">Store PC and Cloud Portal are fully synchronized.</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b; padding-top: 4px;">
+              <span id="modalLastPing">Last Agent Heartbeat: Just now</span>
+              <button id="modalRefreshBtn" class="btn btn-sm btn-secondary" style="font-size: 12px; padding: 4px 10px;" onclick="refreshSyncAudit()">Re-Check Integrity</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div id="viewContainer" class="view-container">
         <!-- Dashboard View -->

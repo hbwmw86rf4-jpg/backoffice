@@ -201,6 +201,76 @@ app.post('/api/upload-xml', upload.single('xml_file'), async (req, res) => {
   }
 });
 
+// 6. Sync Auditor & Health Check Endpoints
+let latestAuditState = {
+  storeDate: null,
+  storeTxCount: 0,
+  storeSalesTotal: 0,
+  cloudTxCount: 0,
+  cloudSalesTotal: 0,
+  inSync: true,
+  lastPingAt: null
+};
+
+app.post('/api/sync-audit', async (req, res) => {
+  const apiKey = req.headers['x-api-key'];
+  if (process.env.API_KEY && apiKey !== process.env.API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized API key' });
+  }
+
+  const { date, tx_count, total_sales } = req.body || {};
+  const { getDb } = require('./database/schema');
+  const db = getDb();
+  const queryDate = date || new Date().toLocaleDateString('en-CA');
+
+  let cloudStats = { count: 0, sales: 0 };
+  if (db) {
+    try {
+      const row = db.prepare(`
+        SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as sales
+        FROM transactions
+        WHERE business_date = ? AND COALESCE(is_voided, 0) = 0 AND COALESCE(is_training, 0) = 0
+      `).get(queryDate);
+      if (row) cloudStats = row;
+    } catch (e) {
+      console.error('Audit query error:', e.message);
+    }
+  }
+
+  const inSync = (tx_count === undefined || cloudStats.count >= tx_count);
+  latestAuditState = {
+    storeDate: queryDate,
+    storeTxCount: tx_count || 0,
+    storeSalesTotal: total_sales || 0,
+    cloudTxCount: cloudStats.count,
+    cloudSalesTotal: cloudStats.sales,
+    inSync,
+    lastPingAt: new Date().toISOString()
+  };
+
+  return res.json({
+    success: true,
+    in_sync: inSync,
+    cloud_tx_count: cloudStats.count,
+    cloud_sales: cloudStats.sales,
+    missing_count: Math.max(0, (tx_count || 0) - cloudStats.count),
+    needs_backfill: !inSync
+  });
+});
+
+app.get('/api/sync-status', (req, res) => {
+  const now = Date.now();
+  const lastPingTime = latestAuditState.lastPingAt ? new Date(latestAuditState.lastPingAt).getTime() : 0;
+  const secondsAgo = lastPingTime > 0 ? Math.round((now - lastPingTime) / 1000) : null;
+  const isOnline = lastPingTime > 0 && secondsAgo < 180;
+
+  res.json({
+    ...latestAuditState,
+    is_online: isOnline,
+    seconds_ago: secondsAgo
+  });
+});
+
 // 6. Serve the Frontend Dashboard & Login Pages
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'login.html'));

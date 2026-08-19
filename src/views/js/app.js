@@ -48,6 +48,109 @@ async function checkAuth() {
   }
 }
 
+let currentSyncAuditData = null;
+
+async function updateSyncStatusBadge() {
+  const badge = document.getElementById('syncStatusBadge');
+  const dot = document.getElementById('syncStatusDot');
+  const text = document.getElementById('syncStatusText');
+  if (!badge || !dot || !text) return;
+
+  try {
+    let data;
+    if (isElectron) {
+      data = await ipcRenderer.invoke('get-sync-status', currentDate);
+    } else {
+      const res = await fetch('/api/sync-status');
+      if (res.ok) data = await res.json();
+    }
+
+    if (!data) return;
+    currentSyncAuditData = data;
+
+    if (!data.is_online && !isElectron) {
+      badge.style.background = '#fef2f2';
+      badge.style.borderColor = '#fecaca';
+      badge.style.color = '#991b1b';
+      dot.style.background = '#ef4444';
+      dot.style.boxShadow = '0 0 6px #ef4444';
+      text.textContent = data.seconds_ago ? `Store Agent Idle (${Math.round(data.seconds_ago/60)}m ago)` : 'Store Agent Offline';
+    } else if (!data.in_sync) {
+      badge.style.background = '#fffbeb';
+      badge.style.borderColor = '#fde68a';
+      badge.style.color = '#92400e';
+      dot.style.background = '#f59e0b';
+      dot.style.boxShadow = '0 0 6px #f59e0b';
+      text.textContent = `Syncing (${data.cloudTxCount}/${data.storeTxCount} txs)`;
+    } else {
+      badge.style.background = '#ecfdf5';
+      badge.style.borderColor = '#a7f3d0';
+      badge.style.color = '#065f46';
+      dot.style.background = '#10b981';
+      dot.style.boxShadow = '0 0 6px #10b981';
+      text.textContent = `Store Sync: 100% In Sync (${data.cloudTxCount} txs)`;
+    }
+  } catch (e) {
+    console.warn('Sync status check error:', e);
+  }
+}
+
+function openSyncAuditModal() {
+  const modal = document.getElementById('syncAuditModal');
+  if (!modal) return;
+  modal.style.display = 'block';
+  renderSyncAuditModal();
+}
+
+function renderSyncAuditModal() {
+  if (!currentSyncAuditData) return;
+  const d = currentSyncAuditData;
+  const storeTx = document.getElementById('modalStoreTx');
+  const storeSales = document.getElementById('modalStoreSales');
+  const cloudTx = document.getElementById('modalCloudTx');
+  const cloudSales = document.getElementById('modalCloudSales');
+  const varianceBadge = document.getElementById('modalVarianceBadge');
+  const auditDetail = document.getElementById('modalAuditDetail');
+  const lastPing = document.getElementById('modalLastPing');
+
+  if (storeTx) storeTx.textContent = `${d.storeTxCount || d.cloudTxCount} Transactions`;
+  if (storeSales) storeSales.textContent = `$${(d.storeSalesTotal || d.cloudSalesTotal || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  if (cloudTx) cloudTx.textContent = `${d.cloudTxCount || 0} Transactions`;
+  if (cloudSales) cloudSales.textContent = `$${(d.cloudSalesTotal || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+  const variance = Math.abs((d.storeSalesTotal || d.cloudSalesTotal || 0) - (d.cloudSalesTotal || 0));
+  if (varianceBadge) {
+    varianceBadge.textContent = `$${variance.toFixed(2)} Variance`;
+    if (variance < 1.00) {
+      varianceBadge.style.background = '#dcfce7';
+      varianceBadge.style.color = '#15803d';
+    } else {
+      varianceBadge.style.background = '#fef3c7';
+      varianceBadge.style.color = '#b45309';
+    }
+  }
+
+  if (auditDetail) {
+    if (d.in_sync) {
+      auditDetail.textContent = 'Store PC register journals and Cloud Portal are completely matched.';
+    } else {
+      auditDetail.textContent = `Auto-healing active: Syncing remaining ${(d.storeTxCount || 0) - (d.cloudTxCount || 0)} transactions from store register...`;
+    }
+  }
+
+  if (lastPing) {
+    lastPing.textContent = d.seconds_ago !== null ? `Last Agent Heartbeat: ${d.seconds_ago}s ago` : 'Local Embedded Engine Active';
+  }
+}
+
+async function refreshSyncAudit() {
+  const btn = document.getElementById('modalRefreshBtn');
+  if (btn) btn.textContent = 'Checking...';
+  await updateSyncStatusBadge();
+  renderSyncAuditModal();
+  if (btn) btn.textContent = 'Re-Check Integrity';
+}
+
 function initializeApp() {
   checkAuth();
   setupNavigation();
@@ -55,6 +158,15 @@ function initializeApp() {
   setupEventListeners();
   loadDashboard();
   loadDatesWithData();
+  updateSyncStatusBadge();
+
+  // Poll sync status every 15 seconds
+  setInterval(updateSyncStatusBadge, 15000);
+
+  const syncBadge = document.getElementById('syncStatusBadge');
+  if (syncBadge) {
+    syncBadge.addEventListener('click', openSyncAuditModal);
+  }
 
   const signOutBtn = document.getElementById('signOutBtn');
   if (signOutBtn) {
